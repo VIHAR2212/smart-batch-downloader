@@ -1,12 +1,18 @@
 {
-  "name": "smart-batch-downloader",
+  "name": "smart-batch-downloader-frontend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "install:all": "cd backend && npm install && cd ../frontend && npm install",
-    "start:backend": "cd backend && npm start",
-    "build:frontend": "cd frontend && npm run build"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
