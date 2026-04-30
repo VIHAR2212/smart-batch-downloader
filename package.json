@@ -1,8 +1,10 @@
 {
-  "name": "smart-batch-downloader-frontend",
+  "name": "smart-batch-downloader",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "echo 'Static site - no build needed'"
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install"
   }
 }
