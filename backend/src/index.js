@@ -10,10 +10,14 @@ const wsService = require('./services/websocket');
 const app = express();
 const server = http.createServer(app);
 
-// CORS
+// CORS — supports wildcard *
+const allowedOrigins = process.env.ALLOWED_ORIGINS || '*';
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || config.ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    if (allowedOrigins === '*') return cb(null, true);
+    if (!origin) return cb(null, true);
+    const list = allowedOrigins.split(',').map(o => o.trim());
+    if (list.includes(origin)) return cb(null, true);
     cb(new Error('Not allowed by CORS'));
   },
   credentials: true,
