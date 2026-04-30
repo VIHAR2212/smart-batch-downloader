@@ -172,7 +172,7 @@
     .jc-failed .prog-fill{background:var(--danger);}
     .prog-meta{display:flex;justify-content:space-between;font-size:0.63rem;font-family:var(--mono);color:var(--muted);}
     .save-btn{margin-top:8px;width:100%;height:33px;background:rgba(78,203,122,0.06);border:1px solid rgba(78,203,122,0.22);border-radius:var(--rsm);color:var(--success);font-family:var(--sans);font-size:0.76rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.3s var(--spring);}
-    .save-btn:hover{background:rgba(78,203,122,0.13);border-color:var(--success);transform:scale(1.02);}
+    .save-btn:hover{background:rgba(78,203,122,0.13);border-color:var(--success);transform:scale(1.02);}.auto-hint{font-size:0.63rem;color:var(--muted);margin-top:6px;margin-bottom:5px;font-family:var(--mono);padding:5px 8px;background:rgba(78,203,122,0.04);border-radius:5px;border:1px solid rgba(78,203,122,0.1);}
     .err-box{margin-top:8px;font-size:0.66rem;font-family:var(--mono);color:var(--danger);background:rgba(240,85,85,0.05);border:1px solid rgba(240,85,85,0.13);border-radius:var(--rsm);padding:7px 10px;line-height:1.6;word-break:break-word;}
     .empty{text-align:center;padding:52px 20px;}
     .empty-icon{font-size:2.4rem;margin-bottom:12px;opacity:0.28;}
@@ -437,7 +437,8 @@ function onWs(m){
   if(m.type==='stats')updateStats(m.data);
   if(m.type==='job_start')updateCard(m.jobId,'running',{});
   if(m.type==='job_progress'){updateCard(m.jobId,'running',m);if(m.speed){document.getElementById('liveSpeed').textContent=m.speed;animBars();}}
-  if(m.type==='job_complete'){S.done.add(m.jobId);S.failed.delete(m.jobId);updateCard(m.jobId,'complete',m);refreshBtns();if(S.quick)doSave(m.jobId,m.filename);}
+  if(m.type==='job_complete'){S.done.add(m.jobId);S.failed.delete(m.jobId);updateCard(m.jobId,'complete',m);refreshBtns();// Auto-download always
+setTimeout(()=>doSave(m.jobId,m.filename),600);}
   if(m.type==='job_fail'){S.failed.add(m.jobId);updateCard(m.jobId,'failed',m);refreshBtns();}
 }
 function animBars(){document.querySelectorAll('.speed-bar').forEach(b=>{b.style.height=(15+Math.random()*80)+'%';b.style.opacity=(0.3+Math.random()*0.55).toString();});}
@@ -489,7 +490,7 @@ function updateCard(jobId,status,data){
   const stat=document.getElementById(`js-${jobId}`),txt=document.getElementById(`jst-${jobId}`),prog=document.getElementById(`jp-${jobId}`),fill=document.getElementById(`jf-${jobId}`),spd=document.getElementById(`jspd-${jobId}`),eta=document.getElementById(`jeta-${jobId}`),act=document.getElementById(`ja-${jobId}`),err=document.getElementById(`je-${jobId}`);
   if(stat)stat.className=`jc-stat jc-${status}`;
   if(status==='running'){if(prog)prog.style.display='block';if(txt)txt.textContent=`Downloading ${(data.percent||0).toFixed(1)}%`;if(fill)fill.style.width=`${data.percent||0}%`;if(spd)spd.textContent=data.speed||'—';if(eta)eta.textContent=data.eta?`ETA ${data.eta}`:'ETA —';}
-  if(status==='complete'){if(prog)prog.style.display='block';if(txt)txt.textContent=data.filename?`✓ ${data.filename}`:'✓ Complete';if(fill)fill.style.width='100%';if(spd)spd.textContent=data.size?fmtB(data.size):'';if(eta)eta.textContent='';if(data.title){const t=document.getElementById(`jt-${jobId}`);if(t&&t.firstChild)t.firstChild.textContent=data.title;}if(act&&data.filename)act.innerHTML=`<button type="button" class="save-btn" onclick="doSave('${jobId}','${esc(data.filename)}')">⬇ Save — ${esc(data.filename)}</button>`;document.getElementById('liveSpeed').textContent='—';}
+  if(status==='complete'){if(prog)prog.style.display='block';if(txt)txt.textContent=data.filename?`✓ ${data.filename}`:'✓ Complete';if(fill)fill.style.width='100%';if(spd)spd.textContent=data.size?fmtB(data.size):'';if(eta)eta.textContent='';if(data.title){const t=document.getElementById(`jt-${jobId}`);if(t&&t.firstChild)t.firstChild.textContent=data.title;}if(act&&data.filename){act.innerHTML='<div class="auto-hint">⬇ Auto-downloading... if it did not start, click Save below</div><button type="button" class="save-btn" onclick="doSave("'+jobId+'","'+esc(data.filename)+'")">⬇ Save — '+esc(data.filename)+'</button>';}document.getElementById('liveSpeed').textContent='—';}
   if(status==='failed'){if(txt)txt.textContent='✗ Failed';if(err&&data.error)err.innerHTML=`<div class="err-box">⚠ ${esc(data.error)}</div>`;}
   refreshBtns();
 }
