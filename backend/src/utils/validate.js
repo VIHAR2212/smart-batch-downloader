@@ -10,6 +10,8 @@ const SUPPORTED_DOMAINS = [
 ];
 
 function isValidUrl(str) {
+  // Allow yt-dlp search queries
+  if (str.startsWith('ytsearch') || str.startsWith('scsearch') || str.startsWith('ytsearchdate')) return true;
   try {
     const url = new URL(str);
     return url.protocol === 'http:' || url.protocol === 'https:';
@@ -19,6 +21,8 @@ function isValidUrl(str) {
 }
 
 function isSupportedUrl(str) {
+  // Allow search queries through
+  if (str.startsWith('ytsearch') || str.startsWith('scsearch') || str.startsWith('ytsearchdate')) return true;
   try {
     const url = new URL(str);
     const host = url.hostname.replace(/^www\./, '');
