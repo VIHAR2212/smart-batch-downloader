@@ -5,51 +5,47 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const config = require('../config');
 
-// Ensure temp dir exists
 if (!fs.existsSync(config.TEMP_DIR)) {
   fs.mkdirSync(config.TEMP_DIR, { recursive: true });
 }
 
 const COOKIE_PATH = path.join(config.TEMP_DIR, 'yt-cookies.txt');
 
-// Write cookies from env var once on startup
+// Write cookies safely - only if small enough
 function ensureCookies() {
   const cookies = process.env.YOUTUBE_COOKIES;
-  if (cookies && cookies.trim().length > 10) {
+  if (cookies && cookies.length > 10 && cookies.length < 50000) {
     try {
       fs.writeFileSync(COOKIE_PATH, cookies.trim(), 'utf8');
-      console.log('✅ YouTube cookies written to', COOKIE_PATH);
+      console.log('✅ Cookies written, size:', cookies.length);
     } catch (e) {
-      console.error('Failed to write cookies:', e.message);
+      console.error('Cookie write failed:', e.message);
     }
   }
 }
-ensureCookies(); // Run immediately on module load
+ensureCookies();
 
 function getCookieArgs() {
-  if (fs.existsSync(COOKIE_PATH) && fs.statSync(COOKIE_PATH).size > 10) {
-    return ['--cookies', COOKIE_PATH];
-  }
+  try {
+    if (fs.existsSync(COOKIE_PATH) && fs.statSync(COOKIE_PATH).size > 10) {
+      return ['--cookies', COOKIE_PATH];
+    }
+  } catch (_) {}
   return [];
 }
 
 function getBypassArgs() {
-  const args = [
+  return [
     '--no-check-certificates',
-    '--extractor-retries', '5',
-    '--retry-sleep', '5',
+    '--extractor-retries', '3',
+    '--retry-sleep', '3',
     '--socket-timeout', '30',
     '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     '--add-header', 'Accept-Language:en-US,en;q=0.9',
-    '--compat-options', 'no-youtube-unavailable-videos',
+    ...getCookieArgs(),
   ];
-  if (fs.existsSync(COOKIE_PATH) && fs.statSync(COOKIE_PATH).size > 10) {
-    args.push('--cookies', COOKIE_PATH);
-  }
-  return args;
 }
 
-// Temp file cleanup
 const tempFiles = new Map();
 function scheduleDeletion(filePath, ttl = config.FILE_TTL_MS) {
   if (tempFiles.has(filePath)) clearTimeout(tempFiles.get(filePath));
@@ -67,13 +63,12 @@ function deleteNow(filePath) {
 function getFormatString(format, quality, smartMode = false) {
   if (format === 'mp3') {
     const bitrate = smartMode ? '192' : quality.replace('kbps', '');
-    return { extractAudio: true, audioFormat: 'mp3', audioBitrate: bitrate };
+    return { audioBitrate: bitrate };
   }
   const heightMap = { '360p': 360, '720p': 720, '1080p': 1080 };
   const height = heightMap[quality] || 720;
   return {
     videoFormat: `bestvideo[height<=${height}][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/best`,
-    height
   };
 }
 
@@ -84,25 +79,27 @@ function sanitizeFilename(name) {
     .substring(0, 100) || 'download';
 }
 
-// Search using yt-dlp (ytsearch5:query or scsearch5:query)
-async function searchVideos(query, platform = 'youtube', limit = 6) {
+// Search videos using yt-dlp search
+async function searchVideos(query, platform = 'youtube', limit = 5) {
   const prefix = platform === 'soundcloud' ? 'scsearch' : 'ytsearch';
   const searchQuery = `${prefix}${limit}:${query}`;
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const args = [
       '--dump-json',
       '--no-playlist',
       '--flat-playlist',
-      ...getBypassArgs(),
+      '--socket-timeout', '20',
+      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      ...getCookieArgs(),
       searchQuery,
     ];
 
     const chunks = [];
-    const proc = spawn(config.YTDLP_PATH, args, { timeout: 30000 });
+    const proc = spawn(config.YTDLP_PATH, args);
     proc.stdout.on('data', d => chunks.push(d.toString()));
     proc.stderr.on('data', () => {});
-    proc.on('close', (code) => {
+    proc.on('close', () => {
       try {
         const lines = chunks.join('').trim().split('\n').filter(Boolean);
         const results = lines.map(l => {
@@ -119,19 +116,17 @@ async function searchVideos(query, platform = 'youtube', limit = 6) {
           } catch (_) { return null; }
         }).filter(Boolean).filter(r => r.url);
         resolve(results);
-      } catch (e) {
-        resolve([]);
-      }
+      } catch (e) { resolve([]); }
     });
     proc.on('error', () => resolve([]));
+    setTimeout(() => { try { proc.kill(); } catch (_) {} }, 25000);
   });
 }
 
 async function fetchMetadata(url) {
   return new Promise((resolve, reject) => {
     const args = [
-      '--dump-json',
-      '--no-playlist',
+      '--dump-json', '--no-playlist',
       ...getBypassArgs(),
       url,
     ];
@@ -144,7 +139,6 @@ async function fetchMetadata(url) {
           duration: data.duration || 0,
           thumbnail: data.thumbnail || null,
           uploader: data.uploader || '',
-          formats: data.formats || [],
         });
       } catch (e) { reject(new Error('Failed to parse metadata')); }
     });
@@ -182,7 +176,6 @@ async function downloadFile(url, format, quality, smartMode, onProgress) {
 
   return new Promise((resolve, reject) => {
     const args = ['--no-playlist', '-o', outPath, ...getBypassArgs()];
-
     if (format === 'mp3') {
       args.push('-x', '--audio-format', 'mp3', '--audio-quality', fmtOpts.audioBitrate + 'k');
     } else {
