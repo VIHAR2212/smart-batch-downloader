@@ -8,6 +8,7 @@ const downloadsRouter = require('./routes/downloads');
 const wsService = require('./services/websocket');
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // CORS
