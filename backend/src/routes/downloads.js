@@ -88,7 +88,7 @@ router.post('/download-zip/:sessionId', async (req, res) => {
   archive.on('error', () => res.destroy());
 });
 
-// POST /api/metadata - fetch metadata for a URL
+// POST /api/metadata
 router.post('/metadata', async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
@@ -100,7 +100,6 @@ router.post('/metadata', async (req, res) => {
   }
 });
 
-// POST /api/search - search YouTube and SoundCloud
 // POST /api/search
 router.post('/search', async (req, res) => {
   const { query, platforms = ['youtube', 'soundcloud'] } = req.body;
