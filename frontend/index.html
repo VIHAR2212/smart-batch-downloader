@@ -508,40 +508,34 @@ async function doSearch(){
   const q=searchInput.value.trim();
   if(!q)return toast('Type something to search','err');
   const btn=document.getElementById('searchBtn');
-  btn.disabled=true;btn.textContent='🔍 Searching...';
+  btn.disabled=true;btn.textContent='⏳ Searching...';
   const results=document.getElementById('searchResults');
   const grid=document.getElementById('resultGrid');
   const header=document.getElementById('searchResultHeader');
   results.classList.remove('show');
-  grid.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:12px;font-family:var(--mono);">Searching...</div>';
+  grid.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:16px;font-family:var(--mono);">🔍 Searching YouTube &amp; SoundCloud...</div>';
   results.classList.add('show');
   try{
-    // Use YouTube search via yt-dlp search format
-    const ytQuery=`ytsearch5:${q}`;
-    const scQuery=`scsearch3:${q}`;
-    // We'll use the backend metadata endpoint to search
-    const [ytRes,scRes]=await Promise.allSettled([
-      searchPlatform(ytQuery,'YouTube'),
-      searchPlatform(scQuery,'SoundCloud'),
-    ]);
-    const items=[];
-    if(ytRes.status==='fulfilled')items.push(...ytRes.value);
-    if(scRes.status==='fulfilled')items.push(...scRes.value);
-    if(items.length===0){grid.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:12px;font-family:var(--mono);">No results found. Try a different search term.</div>';return;}
+    const r=await fetch(`${API}/api/search`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query:q,platforms:['youtube','soundcloud']}),
+      signal:AbortSignal.timeout(40000),
+    });
+    if(!r.ok){const e=await r.json();throw new Error(e.error||'Search failed');}
+    const data=await r.json();
+    const items=data.results||[];
+    if(items.length===0){
+      grid.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:16px;font-family:var(--mono);">No results found. Try a different search term.</div>';
+      return;
+    }
     header.textContent=`${items.length} results for "${q}"`;
     grid.innerHTML='';
     items.forEach(item=>grid.appendChild(makeResultCard(item)));
   }catch(e){
-    grid.innerHTML=`<div style="color:var(--danger);font-size:0.78rem;padding:12px;font-family:var(--mono);">Search failed: ${esc(e.message)}</div>`;
-  }finally{btn.disabled=false;btn.textContent='🔍 Search';}
-}
-
-async function searchPlatform(query,platform){
-  const r=await fetch(`${API}/api/metadata`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:query}),signal:AbortSignal.timeout(25000)});
-  if(!r.ok)throw new Error('Search failed');
-  const data=await r.json();
-  if(data.error)throw new Error(data.error);
-  return [{title:data.title,duration:data.duration,url:query,platform,uploader:data.uploader||''}];
+    if(e.name==='TimeoutError')grid.innerHTML='<div style="color:var(--warn);font-size:0.78rem;padding:16px;font-family:var(--mono);">⚡ Search timed out — server may be waking up. Try again in 30s.</div>';
+    else grid.innerHTML=`<div style="color:var(--danger);font-size:0.78rem;padding:16px;font-family:var(--mono);">Search failed: ${esc(e.message)}</div>`;
+  }finally{btn.disabled=false;btn.innerHTML='🔍 Search';}
 }
 
 function makeResultCard(item){
