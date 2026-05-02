@@ -34,14 +34,19 @@ function getCookieArgs() {
 }
 
 function getBypassArgs() {
-  return [
+  const args = [
     '--no-check-certificates',
-    '--extractor-retries', '3',
-    '--retry-sleep', '3',
+    '--extractor-retries', '5',
+    '--retry-sleep', '5',
     '--socket-timeout', '30',
     '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    ...getCookieArgs(),
+    '--add-header', 'Accept-Language:en-US,en;q=0.9',
+    '--compat-options', 'no-youtube-unavailable-videos',
   ];
+  if (fs.existsSync(COOKIE_PATH) && fs.statSync(COOKIE_PATH).size > 10) {
+    args.push('--cookies', COOKIE_PATH);
+  }
+  return args;
 }
 
 // Temp file cleanup
