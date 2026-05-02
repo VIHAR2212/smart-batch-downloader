@@ -9,16 +9,17 @@ if (!fs.existsSync(config.TEMP_DIR)) {
   fs.mkdirSync(config.TEMP_DIR, { recursive: true });
 }
 
-const COOKIE_PATH = path.join(__dirname, '../../../cookies.txt');
-// Write cookies safely - only if small enough
+const COOKIE_PATH = path.join(__dirname, '..', '..', 'cookies.txt');
+
 function ensureCookies() {
-  const cookies = process.env.YOUTUBE_COOKIES;
-  if (cookies && cookies.length > 10 && cookies.length < 50000) {
-    try {
-      fs.writeFileSync(COOKIE_PATH, cookies.trim(), 'utf8');
-      console.log('✅ Cookies written, size:', cookies.length);
-    } catch (e) {
-      console.error('Cookie write failed:', e.message);
+  if (fs.existsSync(COOKIE_PATH)) {
+    console.log('✅ Cookies file found at:', COOKIE_PATH, 'size:', fs.statSync(COOKIE_PATH).size);
+  } else {
+    console.log('❌ Cookies file NOT found at:', COOKIE_PATH);
+    // Try writing from env var as fallback
+    const cookies = process.env.YOUTUBE_COOKIES;
+    if (cookies && cookies.length > 10) {
+      try { fs.writeFileSync(COOKIE_PATH, cookies.trim()); console.log('✅ Cookies written from env'); } catch(e) { console.error('Cookie write failed:', e.message); }
     }
   }
 }
