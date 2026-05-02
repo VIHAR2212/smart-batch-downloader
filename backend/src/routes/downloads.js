@@ -88,7 +88,7 @@ router.post('/download-zip/:sessionId', async (req, res) => {
   archive.on('error', () => res.destroy());
 });
 
-// POST /api/metadata
+// POST /api/metadata - fetch metadata for a URL
 router.post('/metadata', async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
@@ -100,14 +100,15 @@ router.post('/metadata', async (req, res) => {
   }
 });
 
-// POST /api/search
+// POST /api/search - search YouTube and SoundCloud
 router.post('/search', async (req, res) => {
   const { query, platforms = ['youtube', 'soundcloud'] } = req.body;
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query too short' });
+
   try {
     const searches = platforms.map(p => searchVideos(query.trim(), p, 5));
     const results = await Promise.allSettled(searches);
-    const items = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+    const items = results.flatMap((r, i) => r.status === 'fulfilled' ? r.value : []);
     res.json({ results: items, query });
   } catch (err) {
     res.status(500).json({ error: err.message });
