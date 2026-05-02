@@ -16,10 +16,10 @@ function ensureCookies() {
     console.log('✅ Cookies file found at:', COOKIE_PATH, 'size:', fs.statSync(COOKIE_PATH).size);
   } else {
     console.log('❌ Cookies file NOT found at:', COOKIE_PATH);
-    // Try writing from env var as fallback
     const cookies = process.env.YOUTUBE_COOKIES;
     if (cookies && cookies.length > 10) {
-      try { fs.writeFileSync(COOKIE_PATH, cookies.trim()); console.log('✅ Cookies written from env'); } catch(e) { console.error('Cookie write failed:', e.message); }
+      try { fs.writeFileSync(COOKIE_PATH, cookies.trim()); console.log('✅ Cookies written from env'); }
+      catch(e) { console.error('Cookie write failed:', e.message); }
     }
   }
 }
@@ -35,22 +35,16 @@ function getCookieArgs() {
 }
 
 function getBypassArgs() {
-  const args = [
+  return [
     '--no-check-certificates',
     '--extractor-retries', '3',
     '--retry-sleep', '3',
     '--socket-timeout', '30',
     '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     '--add-header', 'Accept-Language:en-US,en;q=0.9',
-    '--add-header', 'Accept:text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    '--extractor-args', 'youtube:player_client=web,mweb;po_token=web+undefined',
+    '--extractor-args', 'youtube:player_client=web,mweb',
+    ...getCookieArgs(),
   ];
-  try {
-    if (fs.existsSync(COOKIE_PATH) && fs.statSync(COOKIE_PATH).size > 10) {
-      args.push('--cookies', COOKIE_PATH);
-    }
-  } catch (_) {}
-  return args;
 }
 
 const tempFiles = new Map();
@@ -67,6 +61,13 @@ function deleteNow(filePath) {
   try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (_) {}
 }
 
+function sanitizeFilename(name) {
+  return (name || 'download')
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
+    .replace(/\s+/g, '_')
+    .substring(0, 100) || 'download';
+}
+
 function getFormatString(format, quality, smartMode = false) {
   if (format === 'mp3') {
     const bitrate = smartMode ? '192' : quality.replace('kbps', '');
@@ -79,37 +80,119 @@ function getFormatString(format, quality, smartMode = false) {
   };
 }
 
-function sanitizeFilename(name) {
-  return (name || 'download')
-    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
-    .replace(/\s+/g, '_')
-    .substring(0, 100) || 'download';
+// ── YOUTUBE API DOWNLOAD (primary method) ──
+async function downloadYouTubeViaAPI(url, format, onProgress) {
+  const videoId = url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/)?.[1];
+  if (!videoId) throw new Error('Invalid YouTube URL');
+
+  console.log('🌐 Trying YouTube API for:', videoId);
+  onProgress({ percent: 10, speed: 'connecting...', eta: '' });
+
+  // Try multiple free APIs in order
+  const apis = [
+    // API 1: yt-dlp web API alternative
+    async () => {
+      const r = await fetch(
+        `https://api.vevioz.com/@api/json/mp3/128/${videoId}`,
+        { signal: AbortSignal.timeout(20000) }
+      );
+      if (!r.ok) throw new Error('API1 failed');
+      const d = await r.json();
+      if (!d.url) throw new Error('No URL from API1');
+      return { downloadUrl: d.url, title: d.title || videoId };
+    },
+    // API 2: cobalt-based
+    async () => {
+      const r = await fetch('https://api.cobalt.tools/api/json', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          isAudioOnly: format === 'mp3',
+          aFormat: 'mp3',
+          vQuality: '720',
+        }),
+        signal: AbortSignal.timeout(20000),
+      });
+      if (!r.ok) throw new Error('API2 failed');
+      const d = await r.json();
+      if (!d.url) throw new Error('No URL from API2');
+      return { downloadUrl: d.url, title: d.filename || videoId };
+    },
+    // API 3: y2mate-style
+    async () => {
+      const r = await fetch(
+        `https://api.download-lagu-mp3.com/@api/json/${format === 'mp3' ? 'mp3' : 'mp4'}/${videoId}`,
+        { signal: AbortSignal.timeout(20000) }
+      );
+      if (!r.ok) throw new Error('API3 failed');
+      const d = await r.json();
+      if (!d.url) throw new Error('No URL from API3');
+      return { downloadUrl: d.url, title: d.title || videoId };
+    },
+  ];
+
+  let lastError = null;
+  for (let i = 0; i < apis.length; i++) {
+    try {
+      console.log(`Trying API ${i + 1}...`);
+      onProgress({ percent: 20 + i * 15, speed: `API ${i + 1}...`, eta: '' });
+      const result = await apis[i]();
+
+      // Download the actual file
+      console.log('✅ Got download URL, fetching file...');
+      onProgress({ percent: 60, speed: 'downloading...', eta: '' });
+
+      const fileRes = await fetch(result.downloadUrl, {
+        signal: AbortSignal.timeout(120000),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Referer': 'https://www.youtube.com/',
+        },
+      });
+      if (!fileRes.ok) throw new Error(`File fetch failed: ${fileRes.status}`);
+
+      const ext = format === 'mp3' ? 'mp3' : 'mp4';
+      const title = sanitizeFilename(result.title);
+      const filename = `${title}.${ext}`;
+      const outPath = path.join(config.TEMP_DIR, `${uuidv4()}_${filename}`);
+
+      const buffer = await fileRes.arrayBuffer();
+      fs.writeFileSync(outPath, Buffer.from(buffer));
+
+      onProgress({ percent: 100, speed: '', eta: '' });
+      scheduleDeletion(outPath);
+      const stat = fs.statSync(outPath);
+      console.log('✅ YouTube API download complete:', filename, stat.size, 'bytes');
+      return { path: outPath, filename, size: stat.size, meta: { title } };
+
+    } catch (err) {
+      console.log(`API ${i + 1} failed:`, err.message);
+      lastError = err;
+    }
+  }
+  throw new Error(`All YouTube APIs failed: ${lastError?.message}`);
 }
 
-// Search videos using yt-dlp search
+// ── SEARCH ──
 async function searchVideos(query, platform = 'youtube', limit = 5) {
   const prefix = platform === 'soundcloud' ? 'scsearch' : 'ytsearch';
   const searchQuery = `${prefix}${limit}:${query}`;
-
   return new Promise((resolve) => {
     const args = [
-      '--dump-json',
-      '--no-playlist',
-      '--flat-playlist',
+      '--dump-json', '--no-playlist', '--flat-playlist',
       '--socket-timeout', '20',
       '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       ...getCookieArgs(),
       searchQuery,
     ];
-
     const chunks = [];
     const proc = spawn(config.YTDLP_PATH, args);
     proc.stdout.on('data', d => chunks.push(d.toString()));
     proc.stderr.on('data', () => {});
     proc.on('close', () => {
       try {
-        const lines = chunks.join('').trim().split('\n').filter(Boolean);
-        const results = lines.map(l => {
+        const results = chunks.join('').trim().split('\n').filter(Boolean).map(l => {
           try {
             const d = JSON.parse(l);
             return {
@@ -130,13 +213,10 @@ async function searchVideos(query, platform = 'youtube', limit = 5) {
   });
 }
 
+// ── METADATA ──
 async function fetchMetadata(url) {
   return new Promise((resolve, reject) => {
-    const args = [
-      '--dump-json', '--no-playlist',
-      ...getBypassArgs(),
-      url,
-    ];
+    const args = ['--dump-json', '--no-playlist', ...getBypassArgs(), url];
     execFile(config.YTDLP_PATH, args, { timeout: 30000 }, (err, stdout, stderr) => {
       if (err) return reject(new Error(`Metadata fetch failed: ${stderr.slice(-200) || err.message}`));
       try {
@@ -152,6 +232,7 @@ async function fetchMetadata(url) {
   });
 }
 
+// ── PLAYLIST ──
 async function fetchPlaylistMetadata(url) {
   return new Promise((resolve, reject) => {
     const args = ['--dump-json', '--flat-playlist', ...getBypassArgs(), url];
@@ -174,7 +255,21 @@ async function fetchPlaylistMetadata(url) {
   });
 }
 
+// ── MAIN DOWNLOAD ──
 async function downloadFile(url, format, quality, smartMode, onProgress) {
+  const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+
+  // Try YouTube API first
+  if (isYouTube) {
+    try {
+      return await downloadYouTubeViaAPI(url, format, onProgress);
+    } catch (apiErr) {
+      console.log('⚠️ All YouTube APIs failed, trying yt-dlp:', apiErr.message);
+      // Fall through to yt-dlp
+    }
+  }
+
+  // yt-dlp fallback (works for all other platforms + YouTube fallback)
   const meta = await fetchMetadata(url);
   const fmtOpts = getFormatString(format, quality, smartMode);
   const ext = format === 'mp3' ? 'mp3' : 'mp4';
@@ -221,6 +316,7 @@ async function downloadFile(url, format, quality, smartMode, onProgress) {
   });
 }
 
+// ── STREAM TO RESPONSE ──
 function streamToResponse(filePath, filename, res, onSent) {
   if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File not found or already deleted' }); return; }
   const stat = fs.statSync(filePath);
