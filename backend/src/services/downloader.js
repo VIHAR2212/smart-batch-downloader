@@ -9,8 +9,7 @@ if (!fs.existsSync(config.TEMP_DIR)) {
   fs.mkdirSync(config.TEMP_DIR, { recursive: true });
 }
 
-const COOKIE_PATH = path.join(config.TEMP_DIR, 'yt-cookies.txt');
-
+const COOKIE_PATH = path.join(__dirname, '../../../cookies.txt');
 // Write cookies safely - only if small enough
 function ensureCookies() {
   const cookies = process.env.YOUTUBE_COOKIES;
