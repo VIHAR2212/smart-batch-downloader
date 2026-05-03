@@ -85,93 +85,50 @@ async function downloadYouTubeViaAPI(url, format, onProgress) {
   const videoId = url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/)?.[1];
   if (!videoId) throw new Error('Invalid YouTube URL');
 
-  console.log('🌐 Trying YouTube API for:', videoId);
-  onProgress({ percent: 10, speed: 'connecting...', eta: '' });
+  console.log('🌐 Using RapidAPI youtube-mp36 for:', videoId);
+  onProgress({ percent: 20, speed: 'fetching...', eta: '' });
 
-  // Try multiple free APIs in order
-  const apis = [
-    // API 1: yt-dlp web API alternative
-    async () => {
-      const r = await fetch(
-        `https://api.vevioz.com/@api/json/mp3/128/${videoId}`,
-        { signal: AbortSignal.timeout(20000) }
-      );
-      if (!r.ok) throw new Error('API1 failed');
-      const d = await r.json();
-      if (!d.url) throw new Error('No URL from API1');
-      return { downloadUrl: d.url, title: d.title || videoId };
-    },
-    // API 2: cobalt-based
-    async () => {
-      const r = await fetch('https://api.cobalt.tools/api/json', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-          isAudioOnly: format === 'mp3',
-          aFormat: 'mp3',
-          vQuality: '720',
-        }),
-        signal: AbortSignal.timeout(20000),
-      });
-      if (!r.ok) throw new Error('API2 failed');
-      const d = await r.json();
-      if (!d.url) throw new Error('No URL from API2');
-      return { downloadUrl: d.url, title: d.filename || videoId };
-    },
-    // API 3: y2mate-style
-    async () => {
-      const r = await fetch(
-        `https://api.download-lagu-mp3.com/@api/json/${format === 'mp3' ? 'mp3' : 'mp4'}/${videoId}`,
-        { signal: AbortSignal.timeout(20000) }
-      );
-      if (!r.ok) throw new Error('API3 failed');
-      const d = await r.json();
-      if (!d.url) throw new Error('No URL from API3');
-      return { downloadUrl: d.url, title: d.title || videoId };
-    },
-  ];
-
-  let lastError = null;
-  for (let i = 0; i < apis.length; i++) {
-    try {
-      console.log(`Trying API ${i + 1}...`);
-      onProgress({ percent: 20 + i * 15, speed: `API ${i + 1}...`, eta: '' });
-      const result = await apis[i]();
-
-      // Download the actual file
-      console.log('✅ Got download URL, fetching file...');
-      onProgress({ percent: 60, speed: 'downloading...', eta: '' });
-
-      const fileRes = await fetch(result.downloadUrl, {
-        signal: AbortSignal.timeout(120000),
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'https://www.youtube.com/',
-        },
-      });
-      if (!fileRes.ok) throw new Error(`File fetch failed: ${fileRes.status}`);
-
-      const ext = format === 'mp3' ? 'mp3' : 'mp4';
-      const title = sanitizeFilename(result.title);
-      const filename = `${title}.${ext}`;
-      const outPath = path.join(config.TEMP_DIR, `${uuidv4()}_${filename}`);
-
-      const buffer = await fileRes.arrayBuffer();
-      fs.writeFileSync(outPath, Buffer.from(buffer));
-
-      onProgress({ percent: 100, speed: '', eta: '' });
-      scheduleDeletion(outPath);
-      const stat = fs.statSync(outPath);
-      console.log('✅ YouTube API download complete:', filename, stat.size, 'bytes');
-      return { path: outPath, filename, size: stat.size, meta: { title } };
-
-    } catch (err) {
-      console.log(`API ${i + 1} failed:`, err.message);
-      lastError = err;
+  const apiRes = await fetch(
+    `https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`,
+    {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+      },
+      signal: AbortSignal.timeout(30000),
     }
+  );
+
+  if (!apiRes.ok) throw new Error(`RapidAPI error: ${apiRes.status}`);
+  const data = await apiRes.json();
+  console.log('RapidAPI response:', data.status, data.title);
+
+  if (data.status !== 'ok' || !data.link) {
+    throw new Error(data.msg || 'RapidAPI returned no download link');
   }
-  throw new Error(`All YouTube APIs failed: ${lastError?.message}`);
+
+  onProgress({ percent: 60, speed: 'downloading...', eta: '' });
+
+  const fileRes = await fetch(data.link, {
+    signal: AbortSignal.timeout(120000),
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  });
+  if (!fileRes.ok) throw new Error(`File fetch failed: ${fileRes.status}`);
+
+  const ext = format === 'mp3' ? 'mp3' : 'mp4';
+  const title = sanitizeFilename(data.title || videoId);
+  const filename = `${title}.${ext}`;
+  const outPath = path.join(config.TEMP_DIR, `${uuidv4()}_${filename}`);
+
+  const buffer = await fileRes.arrayBuffer();
+  fs.writeFileSync(outPath, Buffer.from(buffer));
+
+  onProgress({ percent: 100, speed: '', eta: '' });
+  scheduleDeletion(outPath);
+  const stat = fs.statSync(outPath);
+  console.log('✅ RapidAPI download complete:', filename, stat.size, 'bytes');
+  return { path: outPath, filename, size: stat.size, meta: { title } };
 }
 
 // ── SEARCH ──
