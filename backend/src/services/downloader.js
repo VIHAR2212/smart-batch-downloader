@@ -33,10 +33,9 @@ function getBypassArgs() {
   return [
     '--no-check-certificates',
     '--extractor-retries', '3',
-    '--retry-sleep', '3',
     '--socket-timeout', '30',
-    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    '--extractor-args', 'youtube:player_client=tv_embedded',
+    '--extractor-args', 'youtube:player_client=android,ios,web_safari',
+    '--user-agent', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
     ...getCookieArgs(),
   ];
 }
@@ -74,6 +73,62 @@ function getFormatString(format, quality, smartMode = false) {
   };
 }
 
+// ── GET DIRECT STREAM URLS (client-side download approach) ──
+async function getDirectUrls(url, format, quality) {
+  const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+  const videoId = isYouTube ? url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/)?.[1] : null;
+  const finalUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : url;
+
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-j',
+      '--no-warnings',
+      '--no-playlist',
+      '--extractor-args', 'youtube:player_client=android,ios,web_safari',
+      '--user-agent', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36',
+      ...getCookieArgs(),
+      finalUrl,
+    ];
+
+    execFile(config.YTDLP_PATH, args, { timeout: 30000, maxBuffer: 10 * 1024 * 1024 }, (err, stdout, stderr) => {
+      if (err) return reject(new Error(`yt-dlp failed: ${stderr.slice(-200) || err.message}`));
+      try {
+        const data = JSON.parse(stdout.trim().split('\n')[0]);
+        const title = sanitizeFilename(data.title || 'download');
+
+        // Get best audio URL for MP3
+        if (format === 'mp3') {
+          const audioFormats = (data.formats || [])
+            .filter(f => f.url && f.acodec && f.acodec !== 'none' && f.protocol === 'https' && !f.vcodec || f.vcodec === 'none')
+            .sort((a, b) => (b.abr || 0) - (a.abr || 0));
+          const best = audioFormats[0] || (data.formats || []).filter(f => f.url && f.protocol === 'https').slice(-1)[0];
+          if (!best) throw new Error('No audio stream found');
+          return resolve({ directUrl: best.url, title, ext: best.ext || 'mp3', isAudio: true });
+        }
+
+        // Get best video URL for MP4
+        const heightMap = { '360p': 360, '720p': 720, '1080p': 1080 };
+        const maxHeight = heightMap[quality] || 720;
+        const videoFormats = (data.formats || [])
+          .filter(f => f.url && f.protocol === 'https' && f.ext === 'mp4' && f.height && f.height <= maxHeight && f.acodec !== 'none')
+          .sort((a, b) => (b.height || 0) - (a.height || 0));
+
+        const best = videoFormats[0];
+        if (!best) {
+          // Fallback: any https format
+          const anyFmt = (data.formats || []).filter(f => f.url && f.protocol === 'https').slice(-1)[0];
+          if (!anyFmt) throw new Error('No video stream found');
+          return resolve({ directUrl: anyFmt.url, title, ext: anyFmt.ext || 'mp4', isAudio: false });
+        }
+        resolve({ directUrl: best.url, title, ext: 'mp4', isAudio: false });
+      } catch (e) {
+        reject(new Error('Failed to parse stream info: ' + e.message));
+      }
+    });
+  });
+}
+
+// ── SEARCH ──
 async function searchVideos(query, platform = 'youtube', limit = 5) {
   const prefix = platform === 'soundcloud' ? 'scsearch' : 'ytsearch';
   const searchQuery = `${prefix}${limit}:${query}`;
@@ -81,8 +136,8 @@ async function searchVideos(query, platform = 'youtube', limit = 5) {
     const args = [
       '--dump-json', '--no-playlist', '--flat-playlist',
       '--socket-timeout', '20',
-      '--extractor-args', 'youtube:player_client=ios',
-      '--user-agent', 'com.google.ios.youtube/19.29.1 CFNetwork/1410.0.3 Darwin/22.6.0',
+      '--extractor-args', 'youtube:player_client=android',
+      '--user-agent', 'Mozilla/5.0 (Linux; Android 14)',
       ...getCookieArgs(),
       searchQuery,
     ];
@@ -113,9 +168,16 @@ async function searchVideos(query, platform = 'youtube', limit = 5) {
   });
 }
 
+// ── FETCH METADATA ──
 async function fetchMetadata(url) {
   return new Promise((resolve, reject) => {
-    const args = ['--dump-json', '--no-playlist', ...getBypassArgs(), url];
+    const args = [
+      '--dump-json', '--no-playlist',
+      '--extractor-args', 'youtube:player_client=android',
+      '--user-agent', 'Mozilla/5.0 (Linux; Android 14)',
+      ...getCookieArgs(),
+      url,
+    ];
     execFile(config.YTDLP_PATH, args, { timeout: 30000 }, (err, stdout, stderr) => {
       if (err) return reject(new Error(`Metadata fetch failed: ${stderr.slice(-200) || err.message}`));
       try {
@@ -131,6 +193,7 @@ async function fetchMetadata(url) {
   });
 }
 
+// ── PLAYLIST ──
 async function fetchPlaylistMetadata(url) {
   return new Promise((resolve, reject) => {
     const args = ['--dump-json', '--flat-playlist', ...getBypassArgs(), url];
@@ -153,8 +216,8 @@ async function fetchPlaylistMetadata(url) {
   });
 }
 
+// ── MAIN DOWNLOAD (for non-YouTube / fallback) ──
 async function downloadFile(url, format, quality, smartMode, onProgress) {
-  // Clean YouTube URL — remove playlist params
   const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
   const videoId = isYouTube ? url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/)?.[1] : null;
   const finalUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : url;
@@ -205,6 +268,7 @@ async function downloadFile(url, format, quality, smartMode, onProgress) {
   });
 }
 
+// ── STREAM TO RESPONSE ──
 function streamToResponse(filePath, filename, res, onSent) {
   if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File not found or already deleted' }); return; }
   const stat = fs.statSync(filePath);
@@ -219,4 +283,4 @@ function streamToResponse(filePath, filename, res, onSent) {
   stream.on('error', () => { res.destroy(); deleteNow(filePath); });
 }
 
-module.exports = { downloadFile, fetchMetadata, fetchPlaylistMetadata, searchVideos, streamToResponse, deleteNow, scheduleDeletion };
+module.exports = { downloadFile, fetchMetadata, fetchPlaylistMetadata, searchVideos, getDirectUrls, streamToResponse, deleteNow, scheduleDeletion };
