@@ -35,8 +35,8 @@ function getBypassArgs() {
     '--extractor-retries', '3',
     '--retry-sleep', '3',
     '--socket-timeout', '30',
-    '--user-agent', 'com.google.ios.youtube/19.29.1 CFNetwork/1410.0.3 Darwin/22.6.0',
-    '--extractor-args', 'youtube:player_client=ios',
+    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    '--extractor-args', 'youtube:player_client=tv_embedded',
     ...getCookieArgs(),
   ];
 }
