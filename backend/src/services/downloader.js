@@ -16,11 +16,6 @@ function ensureCookies() {
     console.log('✅ Cookies file found at:', COOKIE_PATH, 'size:', fs.statSync(COOKIE_PATH).size);
   } else {
     console.log('❌ Cookies file NOT found at:', COOKIE_PATH);
-    const cookies = process.env.YOUTUBE_COOKIES;
-    if (cookies && cookies.length > 10) {
-      try { fs.writeFileSync(COOKIE_PATH, cookies.trim()); console.log('✅ Cookies written from env'); }
-      catch(e) { console.error('Cookie write failed:', e.message); }
-    }
   }
 }
 ensureCookies();
@@ -40,9 +35,8 @@ function getBypassArgs() {
     '--extractor-retries', '3',
     '--retry-sleep', '3',
     '--socket-timeout', '30',
-    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    '--add-header', 'Accept-Language:en-US,en;q=0.9',
-    '--extractor-args', 'youtube:player_client=web,mweb',
+    '--user-agent', 'com.google.ios.youtube/19.29.1 CFNetwork/1410.0.3 Darwin/22.6.0',
+    '--extractor-args', 'youtube:player_client=ios',
     ...getCookieArgs(),
   ];
 }
@@ -80,58 +74,6 @@ function getFormatString(format, quality, smartMode = false) {
   };
 }
 
-// ── YOUTUBE API DOWNLOAD (primary method) ──
-async function downloadYouTubeViaAPI(url, format, onProgress) {
-  const videoId = url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/)?.[1];
-  if (!videoId) throw new Error('Invalid YouTube URL');
-
-  console.log('🌐 Using RapidAPI youtube-mp36 for:', videoId);
-  onProgress({ percent: 20, speed: 'fetching...', eta: '' });
-
-  const apiRes = await fetch(
-    `https://youtube-mp36.p.rapidapi.com/dl?id=${videoId}`,
-    {
-      method: 'GET',
-      headers: {
-        'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com',
-        'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-      },
-      signal: AbortSignal.timeout(30000),
-    }
-  );
-
-  if (!apiRes.ok) throw new Error(`RapidAPI error: ${apiRes.status}`);
-  const data = await apiRes.json();
-  console.log('RapidAPI response:', data.status, data.title);
-
-  if (data.status !== 'ok' || !data.link) {
-    throw new Error(data.msg || 'RapidAPI returned no download link');
-  }
-
-  onProgress({ percent: 60, speed: 'downloading...', eta: '' });
-
-  const fileRes = await fetch(data.link, {
-    signal: AbortSignal.timeout(120000),
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-  });
-  if (!fileRes.ok) throw new Error(`File fetch failed: ${fileRes.status}`);
-
-  const ext = format === 'mp3' ? 'mp3' : 'mp4';
-  const title = sanitizeFilename(data.title || videoId);
-  const filename = `${title}.${ext}`;
-  const outPath = path.join(config.TEMP_DIR, `${uuidv4()}_${filename}`);
-
-  const buffer = await fileRes.arrayBuffer();
-  fs.writeFileSync(outPath, Buffer.from(buffer));
-
-  onProgress({ percent: 100, speed: '', eta: '' });
-  scheduleDeletion(outPath);
-  const stat = fs.statSync(outPath);
-  console.log('✅ RapidAPI download complete:', filename, stat.size, 'bytes');
-  return { path: outPath, filename, size: stat.size, meta: { title } };
-}
-
-// ── SEARCH ──
 async function searchVideos(query, platform = 'youtube', limit = 5) {
   const prefix = platform === 'soundcloud' ? 'scsearch' : 'ytsearch';
   const searchQuery = `${prefix}${limit}:${query}`;
@@ -139,7 +81,8 @@ async function searchVideos(query, platform = 'youtube', limit = 5) {
     const args = [
       '--dump-json', '--no-playlist', '--flat-playlist',
       '--socket-timeout', '20',
-      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      '--extractor-args', 'youtube:player_client=ios',
+      '--user-agent', 'com.google.ios.youtube/19.29.1 CFNetwork/1410.0.3 Darwin/22.6.0',
       ...getCookieArgs(),
       searchQuery,
     ];
@@ -170,7 +113,6 @@ async function searchVideos(query, platform = 'youtube', limit = 5) {
   });
 }
 
-// ── METADATA ──
 async function fetchMetadata(url) {
   return new Promise((resolve, reject) => {
     const args = ['--dump-json', '--no-playlist', ...getBypassArgs(), url];
@@ -189,7 +131,6 @@ async function fetchMetadata(url) {
   });
 }
 
-// ── PLAYLIST ──
 async function fetchPlaylistMetadata(url) {
   return new Promise((resolve, reject) => {
     const args = ['--dump-json', '--flat-playlist', ...getBypassArgs(), url];
@@ -212,22 +153,13 @@ async function fetchPlaylistMetadata(url) {
   });
 }
 
-// ── MAIN DOWNLOAD ──
 async function downloadFile(url, format, quality, smartMode, onProgress) {
+  // Clean YouTube URL — remove playlist params
   const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+  const videoId = isYouTube ? url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/)?.[1] : null;
+  const finalUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : url;
 
-  // Try YouTube API first
-  if (isYouTube) {
-    try {
-      return await downloadYouTubeViaAPI(url, format, onProgress);
-    } catch (apiErr) {
-      console.log('⚠️ All YouTube APIs failed, trying yt-dlp:', apiErr.message);
-      // Fall through to yt-dlp
-    }
-  }
-
-  // yt-dlp fallback (works for all other platforms + YouTube fallback)
-  const meta = await fetchMetadata(url);
+  const meta = await fetchMetadata(finalUrl);
   const fmtOpts = getFormatString(format, quality, smartMode);
   const ext = format === 'mp3' ? 'mp3' : 'mp4';
   const filename = `${meta.title}.${ext}`;
@@ -240,7 +172,7 @@ async function downloadFile(url, format, quality, smartMode, onProgress) {
     } else {
       args.push('-f', fmtOpts.videoFormat, '--merge-output-format', 'mp4');
     }
-    args.push(url);
+    args.push(finalUrl);
 
     const proc = spawn(config.YTDLP_PATH, args);
     let stderr = '';
@@ -273,7 +205,6 @@ async function downloadFile(url, format, quality, smartMode, onProgress) {
   });
 }
 
-// ── STREAM TO RESPONSE ──
 function streamToResponse(filePath, filename, res, onSent) {
   if (!fs.existsSync(filePath)) { res.status(404).json({ error: 'File not found or already deleted' }); return; }
   const stat = fs.statSync(filePath);
