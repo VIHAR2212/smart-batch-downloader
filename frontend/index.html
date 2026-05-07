@@ -4,32 +4,19 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SmartDL — YouTube to MP3/MP4</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg:#060404;--bg2:#0e0808;
-      --glass:rgba(255,255,255,0.032);--glass2:rgba(255,255,255,0.055);--glasshi:rgba(255,255,255,0.08);
-      --border:rgba(255,255,255,0.07);--borderhi:rgba(180,30,30,0.35);
-      --red:#8b1a1a;--redbright:#c0392b;--reddim:rgba(139,26,26,0.13);
-      --cream:#f0ddd0;--text:#ede0d8;--muted:rgba(237,224,216,0.42);--faint:rgba(237,224,216,0.13);
-      --success:#4ecb7a;--danger:#f05555;--warn:#f0a500;
-      --r:13px;--rsm:8px;--sans:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;
-      --spring:cubic-bezier(0.34,1.56,0.64,1);--ease:cubic-bezier(0.4,0,0.2,1);
-    }
+    :root{--bg:#060404;--glass:rgba(255,255,255,0.032);--glass2:rgba(255,255,255,0.055);--glasshi:rgba(255,255,255,0.08);--border:rgba(255,255,255,0.07);--borderhi:rgba(180,30,30,0.35);--red:#8b1a1a;--redbright:#c0392b;--reddim:rgba(139,26,26,0.13);--cream:#f0ddd0;--text:#ede0d8;--muted:rgba(237,224,216,0.42);--faint:rgba(237,224,216,0.13);--success:#4ecb7a;--danger:#f05555;--warn:#f0a500;--r:13px;--rsm:8px;--sans:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;--spring:cubic-bezier(0.34,1.56,0.64,1);--ease:cubic-bezier(0.4,0,0.2,1);}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html,body{width:100%;min-height:100vh;}
     body{font-family:var(--sans);background:var(--bg);color:var(--text);overflow-x:hidden;}
-    .ambient{position:fixed;inset:0;pointer-events:none;z-index:0;
-      background:radial-gradient(ellipse 55% 40% at 8% 12%,rgba(120,20,20,0.11) 0%,transparent 60%),
-        radial-gradient(ellipse 45% 50% at 92% 88%,rgba(80,10,10,0.08) 0%,transparent 60%);}
-
-    /* ── LANDING ── */
+    .ambient{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 55% 40% at 8% 12%,rgba(120,20,20,0.11) 0%,transparent 60%),radial-gradient(ellipse 45% 50% at 92% 88%,rgba(80,10,10,0.08) 0%,transparent 60%);}
+    /* LANDING */
     #landing{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);transition:opacity 0.7s var(--ease),transform 0.7s var(--ease);}
     #landing.exit{opacity:0;transform:scale(1.04);pointer-events:none;}
     .orb-wrap{position:relative;width:110px;height:110px;margin-bottom:32px;animation:orbFloat 3s ease-in-out infinite;}
     @keyframes orbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-    .orb{width:100%;height:100%;border-radius:18px;background:#000;border:2px solid rgba(192,57,43,0.4);display:grid;place-items:center;font-size:3rem;box-shadow:0 0 50px rgba(139,26,26,0.4),0 0 100px rgba(139,26,26,0.12),inset 0 0 30px rgba(139,26,26,0.08);}
+    .orb{width:100%;height:100%;border-radius:18px;background:#000;border:2px solid rgba(192,57,43,0.4);display:grid;place-items:center;font-size:3rem;box-shadow:0 0 50px rgba(139,26,26,0.4),0 0 100px rgba(139,26,26,0.12);}
     .orb-ring{position:absolute;inset:-12px;border-radius:24px;border:1.5px solid rgba(139,26,26,0.22);animation:ringP 2.2s ease-in-out infinite;}
     .orb-ring2{position:absolute;inset:-24px;border-radius:28px;border:1px solid rgba(139,26,26,0.09);animation:ringP 2.2s ease-in-out infinite 0.5s;}
     @keyframes ringP{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.35;transform:scale(1.04)}}
@@ -38,7 +25,7 @@
     .land-title .hi{color:var(--redbright);}
     .land-sub{font-size:1rem;color:var(--muted);text-align:center;max-width:420px;line-height:1.6;animation:landIn 0.8s var(--spring) 0.35s both;margin-bottom:36px;}
     .land-chips{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;animation:landIn 0.8s var(--spring) 0.48s both;margin-bottom:40px;}
-    .land-chip{padding:6px 14px;border-radius:100px;background:var(--glass2);border:1px solid var(--border);font-size:0.76rem;color:var(--muted);backdrop-filter:blur(14px);}
+    .land-chip{padding:6px 14px;border-radius:100px;background:var(--glass2);border:1px solid var(--border);font-size:0.76rem;color:var(--muted);}
     .land-chip span{color:var(--redbright);margin-right:4px;}
     .land-btn{height:54px;padding:0 42px;background:linear-gradient(135deg,var(--red),var(--redbright));border:none;border-radius:100px;font-family:var(--sans);font-size:0.98rem;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 0 36px rgba(139,26,26,0.38),0 8px 28px rgba(0,0,0,0.5);animation:landIn 0.8s var(--spring) 0.6s both;transition:transform 0.3s var(--spring),box-shadow 0.3s;display:flex;align-items:center;gap:10px;}
     .land-btn:hover{transform:scale(1.07) translateY(-3px);box-shadow:0 0 55px rgba(139,26,26,0.5),0 14px 36px rgba(0,0,0,0.55);}
@@ -48,55 +35,39 @@
     .land-feats{position:absolute;bottom:32px;display:flex;gap:28px;animation:landIn 0.8s var(--spring) 0.78s both;}
     .land-feat{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--muted);}
     .land-feat-dot{width:5px;height:5px;border-radius:50%;background:var(--redbright);opacity:0.7;}
-
-    /* ── APP ── */
+    /* APP */
     #app{position:relative;z-index:1;opacity:0;transform:translateY(24px);transition:opacity 0.7s var(--ease) 0.1s,transform 0.7s var(--spring) 0.1s;min-height:100vh;}
     #app.visible{opacity:1;transform:translateY(0);}
     .page{width:100%;padding:18px 20px 60px;display:flex;flex-direction:column;gap:14px;}
-
     /* HEADER */
     .topbar{display:flex;align-items:center;justify-content:space-between;}
     .logo{display:flex;align-items:center;gap:11px;cursor:pointer;}
-    .logo-mark{width:38px;height:38px;background:#000;border:1.5px solid rgba(192,57,43,0.5);border-radius:10px;display:grid;place-items:center;font-size:17px;box-shadow:0 0 16px rgba(139,26,26,0.3);transition:transform 0.3s var(--spring),box-shadow 0.3s;}
-    .logo:hover .logo-mark{transform:scale(1.1) rotate(-5deg);box-shadow:0 0 28px rgba(139,26,26,0.55);}
-    .logo-name{font-size:1.05rem;font-weight:700;color:var(--cream);letter-spacing:-0.3px;}
+    .logo-mark{width:38px;height:38px;background:#000;border:1.5px solid rgba(192,57,43,0.5);border-radius:10px;display:grid;place-items:center;font-size:17px;box-shadow:0 0 16px rgba(139,26,26,0.3);transition:transform 0.3s var(--spring);}
+    .logo:hover .logo-mark{transform:scale(1.1) rotate(-5deg);}
+    .logo-name{font-size:1.05rem;font-weight:700;color:var(--cream);}
     .logo-name em{color:var(--redbright);font-style:normal;}
     .logo-sub{font-size:0.6rem;color:var(--muted);margin-top:1px;}
     .header-right{display:flex;align-items:center;gap:10px;}
-    .ws-pill{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:100px;background:var(--glass);border:1px solid var(--border);font-size:0.66rem;color:var(--muted);font-family:var(--mono);backdrop-filter:blur(16px);}
+    .ws-pill{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:100px;background:var(--glass);border:1px solid var(--border);font-size:0.66rem;color:var(--muted);font-family:var(--mono);}
     .ws-dot{width:6px;height:6px;border-radius:50%;background:var(--faint);transition:all 0.3s;}
     .ws-dot.connected{background:var(--success);box-shadow:0 0 8px var(--success);}
     .ws-dot.connecting{background:var(--redbright);animation:blink 1.2s ease-in-out infinite;}
-    .wake-btn{padding:5px 12px;border-radius:100px;background:rgba(240,165,0,0.1);border:1px solid rgba(240,165,0,0.3);color:var(--warn);font-size:0.66rem;font-family:var(--mono);cursor:pointer;transition:all 0.25s;display:none;}
-    .wake-btn:hover{background:rgba(240,165,0,0.18);}
-    .wake-btn.show{display:block;}
-
-    /* WAKE UP BANNER */
-    .wake-banner{display:none;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;background:rgba(240,165,0,0.07);border:1px solid rgba(240,165,0,0.2);border-radius:var(--rsm);font-size:0.76rem;color:var(--warn);}
-    .wake-banner.show{display:flex;}
-    .wake-progress{flex:1;height:3px;background:rgba(240,165,0,0.15);border-radius:2px;overflow:hidden;}
-    .wake-progress-fill{height:100%;background:var(--warn);border-radius:2px;width:0%;transition:width 0.5s linear;}
-
-    /* SEARCH BAR */
-    .search-section{display:flex;flex-direction:column;gap:8px;}
+    /* SEARCH */
     .search-wrap{display:flex;gap:8px;}
     .search-input{flex:1;height:48px;background:rgba(0,0,0,0.35);border:1.5px solid var(--border);border-radius:var(--r);padding:0 16px;color:var(--text);font-family:var(--sans);font-size:0.88rem;transition:border-color 0.3s,box-shadow 0.3s;}
     .search-input:focus{outline:none;border-color:var(--redbright);box-shadow:0 0 0 3px rgba(139,26,26,0.1);}
     .search-input::placeholder{color:var(--faint);}
     .search-btn{height:48px;padding:0 20px;background:linear-gradient(135deg,var(--red),var(--redbright));border:none;border-radius:var(--r);color:#fff;font-family:var(--sans);font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all 0.3s var(--spring);white-space:nowrap;}
     .search-btn:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(139,26,26,0.35);}
-    .search-btn:active{transform:scale(0.96);}
     .search-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
-
     /* SEARCH RESULTS */
     .search-results{display:none;flex-direction:column;gap:8px;}
     .search-results.show{display:flex;}
-    .search-result-header{font-size:0.6rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:0 2px;}
+    .search-result-header{font-size:0.6rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
     .result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;}
-    .result-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(12px);cursor:pointer;transition:all 0.25s var(--spring);}
+    .result-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);transition:all 0.25s var(--spring);}
     .result-card:hover{background:var(--glasshi);border-color:var(--borderhi);transform:translateY(-2px);}
     .result-card.selected{border-color:var(--redbright);background:var(--reddim);}
-    .result-thumb{width:56px;height:42px;border-radius:6px;object-fit:cover;flex-shrink:0;background:var(--glass2);}
     .result-thumb-ph{width:56px;height:42px;border-radius:6px;background:var(--glass2);display:grid;place-items:center;font-size:1.2rem;flex-shrink:0;}
     .result-info{flex:1;min-width:0;}
     .result-title{font-size:0.78rem;font-weight:500;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
@@ -106,23 +77,20 @@
     .result-platform.sc{color:#ff8c42;border-color:rgba(255,140,66,0.25);}
     .result-add-btn{width:28px;height:28px;border-radius:7px;background:var(--reddim);border:1px solid rgba(139,26,26,0.3);color:var(--redbright);font-size:1rem;display:grid;place-items:center;cursor:pointer;transition:all 0.25s var(--spring);flex-shrink:0;}
     .result-add-btn:hover{background:var(--redbright);color:#fff;transform:scale(1.1);}
-
     /* STATS */
     .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-    .stat-card{padding:14px 16px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(16px);transition:all 0.3s var(--spring);}
+    .stat-card{padding:14px 16px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);transition:all 0.3s var(--spring);}
     .stat-card:hover{border-color:var(--borderhi);transform:translateY(-2px);}
     .stat-lbl{font-size:0.58rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
     .stat-val{font-size:1.8rem;font-weight:700;font-family:var(--mono);line-height:1;}
     .sc-total .stat-val{color:var(--cream);}
-    .sc-active .stat-val{color:var(--redbright);text-shadow:0 0 12px rgba(192,57,43,0.35);}
+    .sc-active .stat-val{color:var(--redbright);}
     .sc-done .stat-val{color:var(--success);}
     .sc-fail .stat-val{color:var(--danger);}
-
     /* THREE COL */
     .three-col{display:grid;grid-template-columns:220px 1fr 255px;gap:14px;align-items:start;}
-    .panel{padding:15px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(20px);transition:border-color 0.3s;}
+    .panel{padding:15px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);transition:border-color 0.3s;}
     .panel-title{font-size:0.57rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1.8px;margin-bottom:12px;}
-
     /* LEFT */
     .left-col{display:flex;flex-direction:column;gap:11px;}
     .steps{display:flex;flex-direction:column;gap:8px;}
@@ -135,7 +103,6 @@
     .plat-chip{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:var(--rsm);background:var(--glass);border:1px solid var(--border);font-size:0.7rem;color:var(--muted);transition:all 0.22s var(--spring);cursor:default;}
     .plat-chip:hover{background:var(--reddim);border-color:var(--borderhi);color:var(--redbright);transform:scale(1.03);}
     .plat-more{grid-column:1/-1;justify-content:center;background:var(--reddim);border-color:rgba(139,26,26,0.2);color:var(--redbright);font-weight:600;}
-
     /* CENTER */
     .center-col{display:flex;flex-direction:column;gap:11px;}
     .toggle-row{display:flex;gap:8px;flex-wrap:wrap;}
@@ -148,26 +115,25 @@
     .toggle-chip.on .knob::after{transform:translateX(10px);background:#fff;}
     .smart-banner{display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--reddim);border:1px solid rgba(139,26,26,0.2);border-radius:var(--rsm);font-size:0.73rem;color:var(--redbright);}
     .smart-banner.on{display:flex;}
-
     .url-ta{width:100%;height:140px;background:rgba(0,0,0,0.3);border:1.5px solid var(--border);border-radius:var(--r);padding:13px;color:var(--text);font-family:var(--mono);font-size:0.78rem;line-height:1.9;resize:none;transition:border-color 0.3s,box-shadow 0.3s;}
     .url-ta:focus{outline:none;border-color:var(--redbright);box-shadow:0 0 0 3px rgba(139,26,26,0.09);}
     .url-ta::placeholder{color:var(--faint);font-family:var(--sans);font-size:0.78rem;}
     .url-ta.drag-over{border-color:var(--success);}
     .input-meta{display:flex;justify-content:space-between;margin-top:6px;font-size:0.65rem;color:var(--muted);font-family:var(--mono);}
     .pl-hint{color:var(--redbright);cursor:pointer;display:none;}
-
     /* QUEUE */
     .q-head{display:none;align-items:center;justify-content:space-between;margin-bottom:9px;}
     .q-label{font-size:0.58rem;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
     .btn-clear{font-size:0.68rem;color:var(--muted);background:none;border:none;cursor:pointer;padding:3px 7px;border-radius:5px;font-family:var(--sans);transition:all 0.22s;}
     .btn-clear:hover{color:var(--text);background:var(--glass2);}
     .job-list{display:flex;flex-direction:column;gap:8px;}
-    .job-card{padding:13px 15px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(12px);animation:cardIn 0.42s var(--spring);transition:border-color 0.22s,transform 0.22s var(--spring);}
+    .job-card{padding:13px 15px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);animation:cardIn 0.42s var(--spring);transition:border-color 0.22s,transform 0.22s var(--spring);}
     @keyframes cardIn{from{opacity:0;transform:translateY(12px) scale(0.97)}to{opacity:1;transform:none}}
     .job-card:hover{transform:translateY(-1px);}
     .jc-running{border-color:rgba(192,57,43,0.28);}
     .jc-complete{border-color:rgba(78,203,122,0.22);}
     .jc-failed{border-color:rgba(240,85,85,0.22);}
+    .jc-youtube{border-color:rgba(240,165,0,0.25);}
     .jc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
     .jc-info{flex:1;min-width:0;}
     .jc-title{font-size:0.82rem;font-weight:600;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
@@ -177,29 +143,34 @@
     .badge.mp4{color:var(--redbright);border-color:rgba(192,57,43,0.25);}
     .badge.mp3{color:var(--success);border-color:rgba(78,203,122,0.25);}
     .jc-stat{display:flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--muted);}
-    .s-dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex-shrink:0;transition:all 0.3s;}
+    .s-dot{width:6px;height:6px;border-radius:50%;background:var(--faint);flex-shrink:0;}
     .jc-running .s-dot{background:var(--redbright);animation:blink 1s infinite;}
     .jc-running .jc-stat{color:var(--redbright);}
     .jc-complete .s-dot{background:var(--success);}
     .jc-complete .jc-stat{color:var(--success);}
     .jc-failed .s-dot{background:var(--danger);}
     .jc-failed .jc-stat{color:var(--danger);}
+    .jc-youtube .s-dot{background:var(--warn);}
+    .jc-youtube .jc-stat{color:var(--warn);}
     .prog-wrap{margin-top:9px;}
-    .prog-bg{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin-bottom:4px;}
+    .prog-bg{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin-bottom:5px;}
     .prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--red),var(--redbright));transition:width 500ms cubic-bezier(0.25,1,0.5,1);min-width:2%;}
     .jc-complete .prog-fill{background:var(--success);width:100%!important;}
     .jc-failed .prog-fill{background:var(--danger);}
     .prog-meta{display:flex;justify-content:space-between;font-size:0.62rem;font-family:var(--mono);color:var(--muted);}
     .auto-hint{font-size:0.62rem;color:var(--muted);margin-top:6px;margin-bottom:4px;font-family:var(--mono);padding:4px 8px;background:rgba(78,203,122,0.04);border-radius:5px;border:1px solid rgba(78,203,122,0.1);}
+    .yt-hint{font-size:0.62rem;color:var(--warn);margin-top:6px;margin-bottom:4px;font-family:var(--mono);padding:4px 8px;background:rgba(240,165,0,0.05);border-radius:5px;border:1px solid rgba(240,165,0,0.15);}
     .save-btn{width:100%;height:32px;background:rgba(78,203,122,0.06);border:1px solid rgba(78,203,122,0.22);border-radius:var(--rsm);color:var(--success);font-family:var(--sans);font-size:0.74rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.3s var(--spring);}
     .save-btn:hover{background:rgba(78,203,122,0.13);border-color:var(--success);transform:scale(1.02);}
+    .yt-dl-btn{width:100%;height:34px;background:rgba(240,165,0,0.08);border:1px solid rgba(240,165,0,0.25);border-radius:var(--rsm);color:var(--warn);font-family:var(--sans);font-size:0.76rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.3s var(--spring);margin-top:8px;}
+    .yt-dl-btn:hover{background:rgba(240,165,0,0.15);border-color:var(--warn);transform:scale(1.02);}
+    .yt-dl-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
     .err-box{margin-top:7px;font-size:0.65rem;font-family:var(--mono);color:var(--danger);background:rgba(240,85,85,0.05);border:1px solid rgba(240,85,85,0.13);border-radius:var(--rsm);padding:7px 9px;line-height:1.6;word-break:break-word;}
     .empty{text-align:center;padding:44px 20px;}
     .empty-icon{font-size:2.2rem;margin-bottom:11px;opacity:0.28;}
     .empty-txt{font-size:0.78rem;color:var(--muted);}
-
     /* PLAYLIST */
-    .pl-panel{display:none;padding:14px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(20px);margin-bottom:10px;}
+    .pl-panel{display:none;padding:14px;border-radius:var(--r);background:var(--glass);border:1px solid var(--border);margin-bottom:10px;}
     .pl-panel.open{display:block;}
     .pl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
     .pl-title{font-size:0.8rem;font-weight:600;color:var(--cream);}
@@ -209,7 +180,6 @@
     .pl-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
     .pl-dur{font-family:var(--mono);font-size:0.62rem;color:var(--muted);flex-shrink:0;}
     .pl-cb{accent-color:var(--redbright);flex-shrink:0;}
-
     /* RIGHT */
     .right-col{display:flex;flex-direction:column;gap:11px;}
     .seg-group{display:flex;gap:5px;}
@@ -235,15 +205,12 @@
     .speed-lbl{font-size:0.6rem;color:var(--muted);font-family:var(--mono);}
     .tip-card{padding:13px;border-radius:var(--r);background:var(--reddim);border:1px solid rgba(139,26,26,0.2);font-size:0.72rem;color:var(--muted);line-height:1.65;}
     .tip-card strong{color:var(--redbright);display:block;margin-bottom:4px;font-size:0.74rem;}
-
-    /* INFO CARDS */
     .info-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
     .info-card{padding:11px 12px;border-radius:var(--rsm);background:var(--glass);border:1px solid var(--border);text-align:center;transition:all 0.22s var(--spring);}
     .info-card:hover{border-color:var(--borderhi);transform:translateY(-2px);}
     .info-card-icon{font-size:1.3rem;margin-bottom:5px;}
     .info-card-val{font-size:0.95rem;font-weight:700;font-family:var(--mono);color:var(--redbright);margin-bottom:1px;}
     .info-card-lbl{font-size:0.62rem;color:var(--muted);}
-
     .tag-d{display:inline-block;font-size:.55rem;font-family:var(--mono);padding:1px 5px;border-radius:4px;background:rgba(139,26,26,.12);border:1px solid rgba(139,26,26,.22);color:var(--redbright);margin-left:4px;}
     .tag-c{display:inline-block;font-size:.55rem;font-family:var(--mono);padding:1px 5px;border-radius:4px;background:rgba(78,203,122,.08);border:1px solid rgba(78,203,122,.22);color:var(--success);margin-left:4px;}
     .toasts{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:7px;z-index:999;}
@@ -265,12 +232,9 @@
 
 <!-- LANDING -->
 <div id="landing">
-  <div class="orb-wrap">
-    <div class="orb-ring2"></div><div class="orb-ring"></div>
-    <div class="orb">⬇</div>
-  </div>
+  <div class="orb-wrap"><div class="orb-ring2"></div><div class="orb-ring"></div><div class="orb">⬇</div></div>
   <h1 class="land-title">Smart<span class="hi">DL</span></h1>
-  <p class="land-sub">Search & download YouTube, SoundCloud and 20+ platforms — MP3 or MP4, instantly free.</p>
+  <p class="land-sub">Search & download from YouTube, SoundCloud and 20+ platforms. MP3 or MP4, free forever.</p>
   <div class="land-chips">
     <div class="land-chip"><span>🔍</span>Search & Download</div>
     <div class="land-chip"><span>🎵</span>MP3 &amp; MP4</div>
@@ -280,36 +244,28 @@
   <button class="land-btn" onclick="launchApp()">Get Started <div class="land-arrow">→</div></button>
   <div class="land-feats">
     <div class="land-feat"><div class="land-feat-dot"></div>YouTube · SoundCloud · Vimeo</div>
+    <div class="land-feat"><div class="land-feat-dot"></div>Client-side YouTube download</div>
     <div class="land-feat"><div class="land-feat-dot"></div>Real-time progress</div>
-    <div class="land-feat"><div class="land-feat-dot"></div>Auto-download</div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
 <div class="page">
-
   <div class="topbar">
     <div class="logo" onclick="location.reload()">
       <div class="logo-mark">⬇</div>
       <div><div class="logo-name">Smart<em>DL</em></div><div class="logo-sub">YouTube to MP3 / MP4</div></div>
     </div>
     <div class="header-right">
-      <button class="wake-btn" id="wakeBtn" onclick="wakeBackend()">⚡ Wake server</button>
       <div class="ws-pill"><div class="ws-dot connecting" id="wsDot"></div><span id="wsLbl">connecting</span></div>
     </div>
   </div>
 
-  <!-- WAKE BANNER -->
-  <div class="wake-banner" id="wakeBanner">
-    <span>🌙 Server is waking up — first request takes ~50 seconds on free tier...</span>
-    <div class="wake-progress"><div class="wake-progress-fill" id="wakeProgressFill"></div></div>
-  </div>
-
   <!-- SEARCH -->
-  <div class="search-section">
+  <div>
     <div class="search-wrap">
-      <input class="search-input" id="searchInput" type="text" placeholder="🔍 Search: 'Blinding Lights', 'Shape of You', any song or video..." />
+      <input class="search-input" id="searchInput" type="text" placeholder="🔍 Search: 'Blinding Lights', 'Shape of You', any song or video..."/>
       <button class="search-btn" id="searchBtn" onclick="doSearch()">🔍 Search</button>
     </div>
     <div class="search-results" id="searchResults">
@@ -334,27 +290,23 @@
         <div class="steps">
           <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Search or Paste</strong>Search any song or paste URLs directly</div></div>
           <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Pick Format</strong>MP4 video or MP3 audio</div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Auto-Download</strong>Files save to Downloads automatically</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Download</strong>Auto-saves to Downloads folder</div></div>
         </div>
       </div>
       <div class="panel">
         <div class="panel-title">Supported Platforms</div>
         <div class="plat-grid">
-          <div class="plat-chip">▶ YouTube</div>
-          <div class="plat-chip">🎵 SoundCloud</div>
-          <div class="plat-chip">🎬 Vimeo</div>
-          <div class="plat-chip">📸 Instagram</div>
-          <div class="plat-chip">🐦 Twitter/X</div>
-          <div class="plat-chip">🎶 TikTok</div>
-          <div class="plat-chip">📘 Facebook</div>
-          <div class="plat-chip">🎮 Twitch</div>
+          <div class="plat-chip">▶ YouTube</div><div class="plat-chip">🎵 SoundCloud</div>
+          <div class="plat-chip">🎬 Vimeo</div><div class="plat-chip">📸 Instagram</div>
+          <div class="plat-chip">🐦 Twitter/X</div><div class="plat-chip">🎶 TikTok</div>
+          <div class="plat-chip">📘 Facebook</div><div class="plat-chip">🎮 Twitch</div>
           <div class="plat-more plat-chip">＋ 20 more</div>
         </div>
       </div>
       <div class="panel">
         <div class="panel-title">Features</div>
         <div class="steps">
-          <div class="step"><div class="step-num" style="font-size:0.9rem;background:var(--glass2);color:var(--redbright);">⚡</div><div class="step-text"><strong>Auto-Download</strong>Files save instantly on complete</div></div>
+          <div class="step"><div class="step-num" style="font-size:0.9rem;background:var(--glass2);color:var(--redbright);">⚡</div><div class="step-text"><strong>Client-Side YouTube</strong>Downloads use YOUR IP — no blocks</div></div>
           <div class="step"><div class="step-num" style="font-size:0.9rem;background:var(--glass2);color:var(--redbright);">🔍</div><div class="step-text"><strong>Search Mode</strong>Find &amp; download without URL</div></div>
           <div class="step"><div class="step-num" style="font-size:0.9rem;background:var(--glass2);color:var(--redbright);">🗜</div><div class="step-text"><strong>Batch ZIP</strong>Bundle all into one file</div></div>
         </div>
@@ -373,7 +325,7 @@
         <button type="button" class="toggle-chip" id="tQuick"><div class="knob"></div> Quick Download</button>
       </div>
       <div>
-        <textarea class="url-ta" id="urlIn" placeholder="Or paste URLs here directly — one per line&#10;&#10;YouTube · SoundCloud · Vimeo · TikTok · Instagram...&#10;&#10;Drag &amp; drop a .txt file" spellcheck="false"></textarea>
+        <textarea class="url-ta" id="urlIn" placeholder="Or paste URLs here — one per line&#10;&#10;YouTube · SoundCloud · Vimeo · TikTok · Instagram...&#10;&#10;Drag &amp; drop a .txt file" spellcheck="false"></textarea>
         <div class="input-meta">
           <span id="urlCount">0 URLs · max 20</span>
           <span class="pl-hint" id="plHint" onclick="expandPlaylist()">🎵 Playlist detected — expand?</span>
@@ -425,7 +377,7 @@
         <div class="speed-val" id="liveSpeed">—</div>
         <div class="speed-lbl">current speed</div>
       </div>
-      <div class="tip-card"><strong>💡 Auto-Download ON</strong>Files save to your Downloads folder automatically. If it doesn't start, click the Save button that appears below each completed track.</div>
+      <div class="tip-card"><strong>💡 YouTube Downloads</strong>YouTube uses your browser's IP — not the server. Click "⬇ Download from Browser" on YouTube jobs for reliable downloads!</div>
     </div>
   </div>
 </div>
@@ -436,57 +388,19 @@
 <script>
 const API='https://smart-batch-downloader.onrender.com';
 const WS_URL='wss://smart-batch-downloader.onrender.com';
-const YOUTUBE_API='https://www.googleapis.com/youtube/v3';
-// No API key needed — we use yt-dlp search via backend + YouTube oEmbed for metadata
-const S={sid:crypto.randomUUID(),fmt:'mp4',qual:'720p',smart:false,quick:false,jobs:new Map(),done:new Set(),failed:new Set(),plItems:[],ws:null,wsOk:false,serverAwake:false};
+const S={sid:crypto.randomUUID(),fmt:'mp4',qual:'720p',smart:false,quick:false,jobs:new Map(),done:new Set(),failed:new Set(),plItems:[],ws:null,wsOk:false};
 
-/* ── WAKE SERVER ── */
-let wakeInterval=null;
-async function wakeBackend(){
-  const banner=document.getElementById('wakeBanner');
-  const fill=document.getElementById('wakeProgressFill');
-  const btn=document.getElementById('wakeBtn');
-  banner.classList.add('show');btn.classList.remove('show');
-  let pct=0;
-  wakeInterval=setInterval(()=>{pct=Math.min(pct+1.8,95);fill.style.width=pct+'%';},500);
-  try{
-    const r=await fetch(`${API}/health`,{signal:AbortSignal.timeout(70000)});
-    if(r.ok){
-      clearInterval(wakeInterval);fill.style.width='100%';
-      setTimeout(()=>banner.classList.remove('show'),1000);
-      S.serverAwake=true;toast('✅ Server is ready!','ok');
-      wsConnect();
-    }
-  }catch(e){
-    clearInterval(wakeInterval);banner.classList.remove('show');
-    toast('Server wake failed — try again','err');btn.classList.add('show');
-  }
-}
-
-/* ── LAUNCH ── */
 function launchApp(){
   const land=document.getElementById('landing'),app=document.getElementById('app');
   land.classList.add('exit');setTimeout(()=>{land.style.display='none';app.classList.add('visible');},700);
-  // Auto-wake backend
-  checkAndWake();
-}
-async function checkAndWake(){
-  try{
-    const r=await fetch(`${API}/health`,{signal:AbortSignal.timeout(5000)});
-    if(r.ok){S.serverAwake=true;wsConnect();return;}
-  }catch(_){}
-  // Server sleeping — show wake UI
-  document.getElementById('wakeBtn').classList.add('show');
-  toast('⚠ Server sleeping — click "Wake server" first','warn');
-  wakeBackend();
+  wsConnect();
 }
 
-/* ── WS ── */
 function wsConnect(){
   const dot=document.getElementById('wsDot'),lbl=document.getElementById('wsLbl');
   dot.className='ws-dot connecting';lbl.textContent='connecting';
   S.ws=new WebSocket(`${WS_URL}/ws`);
-  S.ws.onopen=()=>{S.wsOk=true;dot.className='ws-dot connected';lbl.textContent='live';document.getElementById('wakeBtn').classList.remove('show');S.ws.send(JSON.stringify({type:'subscribe',sessionId:S.sid}));};
+  S.ws.onopen=()=>{S.wsOk=true;dot.className='ws-dot connected';lbl.textContent='live';S.ws.send(JSON.stringify({type:'subscribe',sessionId:S.sid}));};
   S.ws.onmessage=e=>{try{onWs(JSON.parse(e.data));}catch(_){}};
   S.ws.onclose=()=>{S.wsOk=false;dot.className='ws-dot';lbl.textContent='offline';setTimeout(wsConnect,4000);};
   S.ws.onerror=()=>S.ws.close();
@@ -500,71 +414,43 @@ function onWs(m){
 }
 function animBars(){document.querySelectorAll('.speed-bar').forEach(b=>{b.style.height=(15+Math.random()*80)+'%';b.style.opacity=(0.3+Math.random()*0.55).toString();});}
 
-/* ── SEARCH ── */
+// SEARCH
 const searchInput=document.getElementById('searchInput');
 searchInput.addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
-
 async function doSearch(){
-  const q=searchInput.value.trim();
-  if(!q)return toast('Type something to search','err');
-  const btn=document.getElementById('searchBtn');
-  btn.disabled=true;btn.textContent='⏳ Searching...';
-  const results=document.getElementById('searchResults');
-  const grid=document.getElementById('resultGrid');
-  const header=document.getElementById('searchResultHeader');
+  const q=searchInput.value.trim();if(!q)return toast('Type something to search','err');
+  const btn=document.getElementById('searchBtn');btn.disabled=true;btn.textContent='⏳ Searching...';
+  const results=document.getElementById('searchResults'),grid=document.getElementById('resultGrid'),header=document.getElementById('searchResultHeader');
   results.classList.remove('show');
   grid.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:16px;font-family:var(--mono);">🔍 Searching YouTube &amp; SoundCloud...</div>';
   results.classList.add('show');
   try{
-    const r=await fetch(`${API}/api/search`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({query:q,platforms:['youtube','soundcloud']}),
-      signal:AbortSignal.timeout(40000),
-    });
+    const r=await fetch(`${API}/api/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,platforms:['youtube','soundcloud']}),signal:AbortSignal.timeout(40000)});
     if(!r.ok){const e=await r.json();throw new Error(e.error||'Search failed');}
-    const data=await r.json();
-    const items=data.results||[];
-    if(items.length===0){
-      grid.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:16px;font-family:var(--mono);">No results found. Try a different search term.</div>';
-      return;
-    }
-    header.textContent=`${items.length} results for "${q}"`;
-    grid.innerHTML='';
+    const data=await r.json();const items=data.results||[];
+    if(!items.length){grid.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:16px;font-family:var(--mono);">No results found.</div>';return;}
+    header.textContent=`${items.length} results for "${q}"`;grid.innerHTML='';
     items.forEach(item=>grid.appendChild(makeResultCard(item)));
   }catch(e){
-    if(e.name==='TimeoutError')grid.innerHTML='<div style="color:var(--warn);font-size:0.78rem;padding:16px;font-family:var(--mono);">⚡ Search timed out — server may be waking up. Try again in 30s.</div>';
-    else grid.innerHTML=`<div style="color:var(--danger);font-size:0.78rem;padding:16px;font-family:var(--mono);">Search failed: ${esc(e.message)}</div>`;
+    grid.innerHTML=`<div style="color:var(--danger);font-size:0.78rem;padding:16px;font-family:var(--mono);">Search failed: ${esc(e.message)}</div>`;
   }finally{btn.disabled=false;btn.innerHTML='🔍 Search';}
 }
-
 function makeResultCard(item){
   const card=document.createElement('div');card.className='result-card';
   const platClass=item.platform==='YouTube'?'yt':'sc';
   const dur=item.duration?fmtD(item.duration):'';
-  card.innerHTML=`
-    <div class="result-thumb-ph">${item.platform==='YouTube'?'▶':'🎵'}</div>
-    <div class="result-info">
-      <div class="result-title">${esc(item.title||'Unknown')}</div>
-      <div class="result-meta">${esc(item.uploader||'')}${dur?' · '+dur:''}</div>
-    </div>
-    <span class="result-platform ${platClass}">${item.platform}</span>
-    <button class="result-add-btn" title="Add to queue" onclick="addSearchResult(this,'${esc(item.url)}','${esc(item.title||'track')}')">+</button>
-  `;
+  card.innerHTML=`<div class="result-thumb-ph">${item.platform==='YouTube'?'▶':'🎵'}</div><div class="result-info"><div class="result-title">${esc(item.title||'Unknown')}</div><div class="result-meta">${esc(item.uploader||'')}${dur?' · '+dur:''}</div></div><span class="result-platform ${platClass}">${item.platform}</span><button class="result-add-btn" onclick="addSearchResult(this,'${esc(item.url)}','${esc(item.title||'track')}')">+</button>`;
   return card;
 }
-
 function addSearchResult(btn,url,title){
   const urlIn=document.getElementById('urlIn');
-  const existing=urlIn.value.trim();
-  urlIn.value=existing?(existing+'\n'+url):url;
-  onInput();
-  btn.textContent='✓';btn.style.background='var(--success)';btn.style.color='#000';
+  urlIn.value=(urlIn.value.trim()?urlIn.value.trim()+'\n':'')+url;
+  onInput();btn.textContent='✓';btn.style.background='var(--success)';btn.style.color='#000';
   btn.closest('.result-card').classList.add('selected');
   toast(`Added: ${title.substring(0,30)}...`,'ok');
 }
 
-/* ── URL INPUT ── */
+// URL INPUT
 const urlIn=document.getElementById('urlIn');
 function getUrls(){return urlIn.value.split('\n').map(l=>l.trim()).filter(l=>l.startsWith('http')||l.startsWith('ytsearch')||l.startsWith('scsearch'));}
 function onInput(){
@@ -577,7 +463,7 @@ urlIn.addEventListener('dragover',e=>{e.preventDefault();urlIn.classList.add('dr
 urlIn.addEventListener('dragleave',()=>urlIn.classList.remove('drag-over'));
 urlIn.addEventListener('drop',e=>{e.preventDefault();urlIn.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type==='text/plain'){const r=new FileReader();r.onload=ev=>{urlIn.value=ev.target.result;onInput();};r.readAsText(f);}else{const t=e.dataTransfer.getData('text');if(t){urlIn.value+=(urlIn.value?'\n':'')+t;onInput();}}});
 
-/* ── FORMAT ── */
+// FORMAT
 document.getElementById('fmtGroup').addEventListener('click',e=>{const b=e.target.closest('[data-fmt]');if(!b)return;document.querySelectorAll('[data-fmt]').forEach(x=>x.classList.remove('active'));b.classList.add('active');S.fmt=b.dataset.fmt;rebuildQual();});
 function rebuildQual(){
   const mp3=S.fmt==='mp3',opts=mp3?[['128kbps','128k'],['192kbps','192k'],['320kbps','320k']]:[['360p','360p'],['720p','720p'],['1080p','1080p']];
@@ -588,25 +474,147 @@ document.addEventListener('click',e=>{const b=e.target.closest('#qualGroup [data
 document.getElementById('tSmart').addEventListener('click',function(){S.smart=!S.smart;this.classList.toggle('on',S.smart);document.getElementById('smartBanner').classList.toggle('on',S.smart);});
 document.getElementById('tQuick').addEventListener('click',function(){S.quick=!S.quick;this.classList.toggle('on',S.quick);});
 
-/* ── DOWNLOAD ALL ── */
+// DOWNLOAD ALL
 document.getElementById('btnDlAll').addEventListener('click',dlAll);
 async function dlAll(){
   const urls=getUrls();if(!urls.length)return toast('Search a song or paste URLs first','err');if(urls.length>20)return toast('Max 20 URLs per batch','err');
   document.getElementById('emptyState')?.remove();document.getElementById('qHead').style.display='flex';
-  const btn=document.getElementById('btnDlAll');btn.disabled=true;btn.textContent='⏳ Queuing...';
-  try{
-    const r=await fetch(`${API}/api/batch`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls,format:S.fmt,quality:S.qual,smartMode:S.smart,sessionId:S.sid}),signal:AbortSignal.timeout(60000)});
-    if(!r.ok){const e=await r.json();throw new Error(e.error||'Server error');}
-    const data=await r.json();for(const j of data.jobs)addCard(j.jobId,j.url,j.deduped,j.cached);
-    if(data.invalid?.length)toast(`${data.invalid.length} URL(s) skipped`,'err');
-    updateStats(data.stats);toast(`${data.jobs.length} download(s) queued`,'ok');if(!S.wsOk)poll();
-  }catch(err){
-    if(err.name==='TimeoutError')toast('Server is slow to respond — it may be waking up. Try again in 30s','warn');
-    else toast(err.message,'err');
-  }finally{const b=document.getElementById('btnDlAll');b.disabled=false;b.innerHTML='⬇ Download All';}
+
+  for(const url of urls){
+    const isYT=url.includes('youtube.com')||url.includes('youtu.be');
+    if(isYT){
+      // YouTube: use client-side download approach
+      addYouTubeCard(url);
+    } else {
+      // Other platforms: use server-side queue
+      addCard(url);
+    }
+  }
 }
 
-function addCard(jobId,url,deduped,cached){
+// ADD YOUTUBE CARD (client-side download)
+function addYouTubeCard(url){
+  const jobId='yt-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  const list=document.getElementById('jobList');
+  const d=document.createElement('div');d.id=`jc-${jobId}`;d.className='job-card jc-youtube';
+  const videoId=url.match(/(?:v=|youtu\.be\/)([^&\n?#]+)/)?.[1]||'';
+  const cleanUrl=videoId?`https://www.youtube.com/watch?v=${videoId}`:url;
+  d.innerHTML=`
+    <div class="jc-top">
+      <div class="jc-info">
+        <div class="jc-title" id="jt-${jobId}">youtube.com — ${esc(videoId||url.slice(0,20))}</div>
+        <div class="jc-url">${esc(cleanUrl)}</div>
+      </div>
+      <div class="jc-badges"><span class="badge ${S.fmt}">${S.fmt.toUpperCase()}</span><span class="badge">${S.qual}</span></div>
+    </div>
+    <div class="jc-stat jc-youtube" id="js-${jobId}"><div class="s-dot"></div><span id="jst-${jobId}">Getting stream URL...</span></div>
+    <div class="prog-wrap" id="jp-${jobId}" style="display:none;"><div class="prog-bg"><div class="prog-fill" id="jf-${jobId}" style="width:0%"></div></div><div class="prog-meta"><span id="jspd-${jobId}">—</span><span id="jeta-${jobId}"></span></div></div>
+    <div id="ja-${jobId}"></div>
+    <div id="je-${jobId}"></div>`;
+  list.prepend(d);
+  animN('stTotal',parseInt(document.getElementById('stTotal').textContent||0)+1);
+  // Fetch direct URL
+  fetchYouTubeStream(jobId,cleanUrl,S.fmt,S.qual);
+}
+
+async function fetchYouTubeStream(jobId,url,format,quality){
+  const txt=document.getElementById(`jst-${jobId}`);
+  const act=document.getElementById(`ja-${jobId}`);
+  const err=document.getElementById(`je-${jobId}`);
+  const prog=document.getElementById(`jp-${jobId}`);
+  try{
+    if(txt)txt.textContent='Fetching stream URL...';
+    const r=await fetch(`${API}/api/stream-url`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({url,format,quality}),
+      signal:AbortSignal.timeout(35000),
+    });
+    if(!r.ok){const e=await r.json();throw new Error(e.error||'Failed to get stream URL');}
+    const data=await r.json();
+    // Got direct URL! Show download button
+    const card=document.getElementById(`jc-${jobId}`);
+    if(card)card.className='job-card jc-youtube';
+    const stat=document.getElementById(`js-${jobId}`);
+    if(stat)stat.className='jc-stat jc-youtube';
+    if(txt)txt.textContent=`✓ Ready — ${esc(data.title||'YouTube video')}`;
+    const titleEl=document.getElementById(`jt-${jobId}`);
+    if(titleEl&&data.title)titleEl.textContent=data.title;
+    if(act){
+      act.innerHTML=`
+        <div class="yt-hint">⚡ Click below — file downloads using YOUR browser connection (bypasses server IP block)</div>
+        <button type="button" class="yt-dl-btn" id="ytbtn-${jobId}" onclick="clientDownload('${jobId}','${esc(data.directUrl)}','${esc(data.title||'youtube_video')}','${esc(data.ext||format)}')">
+          ⬇ Download from Browser — ${esc(data.title||'YouTube video')}
+        </button>`;
+    }
+    S.done.add(jobId);refreshBtns();
+    animN('stDone',parseInt(document.getElementById('stDone').textContent||0)+1);
+  }catch(e){
+    const card=document.getElementById(`jc-${jobId}`);if(card)card.className='job-card jc-failed';
+    const stat=document.getElementById(`js-${jobId}`);if(stat)stat.className='jc-stat jc-failed';
+    if(txt)txt.textContent='✗ Failed';
+    if(err)err.innerHTML=`<div class="err-box">⚠ ${esc(e.message)}</div>`;
+    S.failed.add(jobId);refreshBtns();
+    animN('stFailed',parseInt(document.getElementById('stFailed').textContent||0)+1);
+  }
+}
+
+async function clientDownload(jobId,directUrl,title,ext){
+  const btn=document.getElementById(`ytbtn-${jobId}`);
+  if(btn){btn.disabled=true;btn.textContent='⏳ Downloading...';}
+  try{
+    // Try fetch + blob first
+    const r=await fetch(directUrl,{signal:AbortSignal.timeout(120000)});
+    if(!r.ok)throw new Error('Stream fetch failed');
+    const blob=await r.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`${title}.${ext}`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    toast(`✓ Downloaded: ${title}!`,'ok');
+    if(btn){btn.disabled=false;btn.textContent='✓ Downloaded!';}
+  }catch(e){
+    // Fallback: open in new tab
+    window.open(directUrl,'_blank');
+    toast('Opened in new tab — right-click → Save As','warn');
+    if(btn){btn.disabled=false;btn.textContent='↗ Opened in new tab';}
+  }
+}
+
+// SERVER-SIDE QUEUE (for non-YouTube)
+async function addCard(url){
+  const isYT=url.includes('youtube.com')||url.includes('youtu.be');
+  if(isYT)return;// handled by addYouTubeCard
+  const r=await fetch(`${API}/api/batch`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls:[url],format:S.fmt,quality:S.qual,smartMode:S.smart,sessionId:S.sid})});
+  if(!r.ok)return;
+  const data=await r.json();
+  for(const job of data.jobs)addJobCard(job.jobId,job.url,job.deduped,job.cached);
+  updateStats(data.stats);
+  if(!S.wsOk)poll();
+}
+
+document.getElementById('btnDlAll').addEventListener('click',async function(){
+  const urls=getUrls();if(!urls.length)return toast('Search a song or paste URLs first','err');if(urls.length>20)return toast('Max 20 URLs per batch','err');
+  document.getElementById('emptyState')?.remove();document.getElementById('qHead').style.display='flex';
+  const ytUrls=urls.filter(u=>u.includes('youtube.com')||u.includes('youtu.be'));
+  const otherUrls=urls.filter(u=>!u.includes('youtube.com')&&!u.includes('youtu.be'));
+  // Handle YouTube separately
+  ytUrls.forEach(u=>addYouTubeCard(u));
+  // Handle others via server queue
+  if(otherUrls.length>0){
+    const btn=document.getElementById('btnDlAll');btn.disabled=true;btn.textContent='⏳ Queuing...';
+    try{
+      const r=await fetch(`${API}/api/batch`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls:otherUrls,format:S.fmt,quality:S.qual,smartMode:S.smart,sessionId:S.sid})});
+      if(!r.ok){const e=await r.json();throw new Error(e.error||'Server error');}
+      const data=await r.json();for(const j of data.jobs)addJobCard(j.jobId,j.url,j.deduped,j.cached);
+      if(data.invalid?.length)toast(`${data.invalid.length} URL(s) skipped`,'err');
+      updateStats(data.stats);if(!S.wsOk)poll();
+    }catch(err){toast(err.message,'err');}
+    finally{const b=document.getElementById('btnDlAll');b.disabled=false;b.innerHTML='⬇ Download All';}
+  }
+},true);// override previous listener
+
+function addJobCard(jobId,url,deduped,cached){
   S.jobs.set(jobId,{url});const list=document.getElementById('jobList');
   const host=(()=>{try{return new URL(url).hostname;}catch(_){return url.slice(0,26);}})();
   const d=document.createElement('div');d.id=`jc-${jobId}`;d.className='job-card';
@@ -618,19 +626,13 @@ function updateCard(jobId,status,data){
   const stat=document.getElementById(`js-${jobId}`),txt=document.getElementById(`jst-${jobId}`),prog=document.getElementById(`jp-${jobId}`),fill=document.getElementById(`jf-${jobId}`),spd=document.getElementById(`jspd-${jobId}`),eta=document.getElementById(`jeta-${jobId}`),act=document.getElementById(`ja-${jobId}`),err=document.getElementById(`je-${jobId}`);
   if(stat)stat.className=`jc-stat jc-${status}`;
   if(status==='running'){if(prog)prog.style.display='block';if(txt)txt.textContent=`Downloading ${(data.percent||0).toFixed(1)}%`;if(fill)fill.style.width=`${data.percent||0}%`;if(spd)spd.textContent=data.speed||'—';if(eta)eta.textContent=data.eta?`ETA ${data.eta}`:'ETA —';}
-  if(status==='complete'){if(prog)prog.style.display='block';if(txt)txt.textContent=data.filename?`✓ ${data.filename}`:'✓ Complete';if(fill)fill.style.width='100%';if(spd)spd.textContent=data.size?fmtB(data.size):'';if(eta)eta.textContent='';if(data.title){const t=document.getElementById(`jt-${jobId}`);if(t&&t.firstChild)t.firstChild.textContent=data.title;}if(act&&data.filename){act.innerHTML='<div class="auto-hint">⬇ Auto-downloading to your Downloads folder... if it didn\'t start, click Save below</div><button type="button" class="save-btn" onclick="doSave(\''+jobId+'\',\''+esc(data.filename)+'\')">⬇ Save — '+esc(data.filename)+'</button>';}document.getElementById('liveSpeed').textContent='—';}
+  if(status==='complete'){if(prog)prog.style.display='block';if(txt)txt.textContent=data.filename?`✓ ${data.filename}`:'✓ Complete';if(fill)fill.style.width='100%';if(spd)spd.textContent=data.size?fmtB(data.size):'';if(eta)eta.textContent='';if(data.title){const t=document.getElementById(`jt-${jobId}`);if(t&&t.firstChild)t.firstChild.textContent=data.title;}if(act&&data.filename){act.innerHTML='<div class="auto-hint">⬇ Auto-downloading... if it didn\'t start click Save below</div><button type="button" class="save-btn" onclick="doSave(\''+jobId+'\',\''+esc(data.filename)+'\')">⬇ Save — '+esc(data.filename)+'</button>';}document.getElementById('liveSpeed').textContent='—';}
   if(status==='failed'){if(txt)txt.textContent='✗ Failed';if(err&&data.error)err.innerHTML=`<div class="err-box">⚠ ${esc(data.error)}</div>`;}
   refreshBtns();
 }
 function doSave(id,fn){const a=document.createElement('a');a.href=`${API}/api/download/${id}`;a.download=fn||'download';document.body.appendChild(a);a.click();document.body.removeChild(a);}
-
-document.getElementById('btnZip').addEventListener('click',async function(){
-  this.disabled=true;this.textContent='⏳ Building…';
-  try{const r=await fetch(`${API}/api/download-zip/${S.sid}`,{method:'POST'});if(!r.ok){const e=await r.json();throw new Error(e.error);}const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='smartdl-batch.zip';a.click();URL.revokeObjectURL(u);toast('ZIP downloaded!','ok');}catch(e){toast(e.message,'err');}finally{this.disabled=false;this.innerHTML='🗜 Download ZIP';}
-});
-document.getElementById('btnRetry').addEventListener('click',async function(){
-  try{const r=await fetch(`${API}/api/retry-failed/${S.sid}`,{method:'POST'});const d=await r.json();if(d.retried?.length){for(const{old:o,new:n}of d.retried){const c=document.getElementById(`jc-${o}`);if(c)c.id=`jc-${n}`;['js-','jst-','jp-','jf-','jspd-','jeta-','ja-','je-','jt-'].forEach(p=>{const el=document.getElementById(p+o);if(el)el.id=p+n;});updateCard(n,'queued',{});S.failed.delete(o);}toast(`Retrying ${d.retried.length} job(s)`,'ok');}else toast('No failed downloads','inf');}catch(e){toast(e.message,'err');}
-});
+document.getElementById('btnZip').addEventListener('click',async function(){this.disabled=true;this.textContent='⏳ Building…';try{const r=await fetch(`${API}/api/download-zip/${S.sid}`,{method:'POST'});if(!r.ok){const e=await r.json();throw new Error(e.error);}const b=await r.blob();const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='smartdl-batch.zip';a.click();URL.revokeObjectURL(u);toast('ZIP downloaded!','ok');}catch(e){toast(e.message,'err');}finally{this.disabled=false;this.innerHTML='🗜 Download ZIP';}});
+document.getElementById('btnRetry').addEventListener('click',async function(){try{const r=await fetch(`${API}/api/retry-failed/${S.sid}`,{method:'POST'});const d=await r.json();if(d.retried?.length){for(const{old:o,new:n}of d.retried){const c=document.getElementById(`jc-${o}`);if(c)c.id=`jc-${n}`;['js-','jst-','jp-','jf-','jspd-','jeta-','ja-','je-','jt-'].forEach(p=>{const el=document.getElementById(p+o);if(el)el.id=p+n;});updateCard(n,'queued',{});S.failed.delete(o);}toast(`Retrying ${d.retried.length} job(s)`,'ok');}else toast('No failed downloads','inf');}catch(e){toast(e.message,'err');}});
 function clearAll(){S.jobs.clear();S.done.clear();S.failed.clear();document.getElementById('jobList').innerHTML='<div class="empty" id="emptyState"><div class="empty-icon">📥</div><div class="empty-txt">Search a song above or paste URLs and hit Download All</div></div>';document.getElementById('qHead').style.display='none';updateStats({});refreshBtns();}
 async function expandPlaylist(){const u=getUrls();if(u.length!==1)return;toast('Fetching playlist…','inf');try{const r=await fetch(`${API}/api/playlist`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u[0]})});const d=await r.json();if(d.error)throw new Error(d.error);S.plItems=d.items;document.getElementById('plTitle').textContent=`${d.items.length} items`;document.getElementById('plList').innerHTML=d.items.map((it,i)=>`<div class="pl-item"><input type="checkbox" class="pl-cb" id="pl-${i}" checked><span class="pl-name">${esc(it.title||it.url)}</span><span class="pl-dur">${fmtD(it.duration)}</span></div>`).join('');document.getElementById('plPanel').classList.add('open');}catch(e){toast('Playlist: '+e.message,'err');}}
 function selectAllPl(){document.querySelectorAll('.pl-cb').forEach(c=>c.checked=true);}
@@ -644,6 +646,8 @@ function toast(msg,type='inf'){const box=document.getElementById('toasts');const
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function fmtB(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
 function fmtD(s){if(!s)return'';return`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;}
+// Remove duplicate event listener - keep only the overridden one
+document.getElementById('btnDlAll').removeEventListener('click',dlAll);
 </script>
 </body>
 </html>
