@@ -2,12 +2,11 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const path = require('path');
 const fs = require('fs');
 const archiver = require('archiver');
 
 const queue = require('../services/queue');
-const { downloadFile, fetchMetadata, fetchPlaylistMetadata, searchVideos, streamToResponse, scheduleDeletion } = require('../services/downloader');
+const { downloadFile, fetchMetadata, fetchPlaylistMetadata, searchVideos, getDirectUrls, streamToResponse } = require('../services/downloader');
 const ws = require('../services/websocket');
 const { isValidUrl, isSupportedUrl, parseUrls, deduplicateUrls } = require('../utils/validate');
 const config = require('../config');
@@ -15,7 +14,7 @@ const config = require('../config');
 const sessionJobs = new Map();
 const jobMeta = new Map();
 
-// POST /api/batch
+// POST /api/batch - for non-YouTube (SoundCloud etc.)
 router.post('/batch', (req, res) => {
   const { urls: rawUrls, format = 'mp4', quality = '720p', smartMode = false, sessionId } = req.body;
   if (!sessionId) return res.status(400).json({ error: 'sessionId required' });
@@ -25,11 +24,10 @@ router.post('/batch', (req, res) => {
   if (parsed.length === 0) return res.status(400).json({ error: 'No valid URLs provided' });
   if (parsed.length > config.MAX_URLS_PER_BATCH) return res.status(400).json({ error: `Max ${config.MAX_URLS_PER_BATCH} URLs per batch` });
 
-  const jobs = [];
-  const invalid = [];
+  const jobs = [], invalid = [];
 
   for (const url of parsed) {
-    if (!isValidUrl(url)) { invalid.push({ url, reason: 'Invalid URL format' }); continue; }
+    if (!isValidUrl(url)) { invalid.push({ url, reason: 'Invalid URL' }); continue; }
     if (!isSupportedUrl(url)) { invalid.push({ url, reason: 'Unsupported domain' }); continue; }
 
     const jobId = uuidv4();
@@ -46,6 +44,24 @@ router.post('/batch', (req, res) => {
     jobs.push({ jobId: finalId, url, deduped, cached });
   }
   res.json({ jobs, invalid, stats: queue.getStats() });
+});
+
+// POST /api/stream-url - KEY ENDPOINT: returns direct stream URL for client-side download
+router.post('/stream-url', async (req, res) => {
+  const { url, format = 'mp3', quality = '720p' } = req.body;
+  if (!url) return res.status(400).json({ error: 'URL required' });
+
+  try {
+    const result = await getDirectUrls(url, format, quality);
+    res.json({
+      directUrl: result.directUrl,
+      title: result.title,
+      ext: result.ext,
+      isAudio: result.isAudio,
+    });
+  } catch (err) {
+    res.status(422).json({ error: err.message });
+  }
 });
 
 // GET /api/status/:jobId
@@ -88,7 +104,7 @@ router.post('/download-zip/:sessionId', async (req, res) => {
   archive.on('error', () => res.destroy());
 });
 
-// POST /api/metadata - fetch metadata for a URL
+// POST /api/metadata
 router.post('/metadata', async (req, res) => {
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL required' });
@@ -100,15 +116,14 @@ router.post('/metadata', async (req, res) => {
   }
 });
 
-// POST /api/search - search YouTube and SoundCloud
+// POST /api/search
 router.post('/search', async (req, res) => {
   const { query, platforms = ['youtube', 'soundcloud'] } = req.body;
   if (!query || query.trim().length < 2) return res.status(400).json({ error: 'Query too short' });
-
   try {
     const searches = platforms.map(p => searchVideos(query.trim(), p, 5));
     const results = await Promise.allSettled(searches);
-    const items = results.flatMap((r, i) => r.status === 'fulfilled' ? r.value : []);
+    const items = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
     res.json({ results: items, query });
   } catch (err) {
     res.status(500).json({ error: err.message });
