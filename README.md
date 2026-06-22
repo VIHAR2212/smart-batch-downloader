@@ -181,7 +181,7 @@ Or use the included `render.yaml` for infrastructure-as-code deployment.
 
 ---
 
-## 📝 Notes
+## 📝 Notes.
 
 - yt-dlp must be installed on the server. On Render, include `pip install yt-dlp` in your build command.
 - Files are stored temporarily in `/tmp/batch-dl` and auto-deleted after 2 minutes — no persistent storage needed.
